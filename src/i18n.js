@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 
 export const messages = {
   de: {
-    brand: 'Alseda StromPlus GmbH',
+    brand: 'Test-Strom',
     date: {
       placeholder: 'Datum wählen',
       dialog: 'Datumsauswahl',
@@ -106,7 +106,7 @@ export const messages = {
     },
   },
   en: {
-    brand: 'Alseda StromPlus GmbH',
+    brand: 'Test-Strom',
     date: {
       placeholder: 'Select date',
       dialog: 'Date picker',
