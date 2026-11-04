@@ -10,7 +10,7 @@ export default function TariffList({ search, onSelect }) {
     <section className="leaves">
       <h2 className="stagger" style={{ '--i': 0 }}>{t.tariffs.title(search.city)}</h2>
       {tariffs.map((tf, i) => (
-        <article className="tariff card stagger" style={{ '--i': i + 1 }} key={tf.id}>
+        <article className={`tariff card stagger${tf.popular ? ' tariff--popular' : ''}`} style={{ '--i': i + 1 }} key={tf.id}>
           {tf.popular && <span className="badge">{t.tariffs.popular}</span>}
           <div className="tariff__main">
             <div className="tariff__icon"><PlugIcon /></div>

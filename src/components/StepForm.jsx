@@ -124,6 +124,9 @@ export default function StepForm({ tariff, search, onSubmit, onBack, busy }) {
 
   return (
     <section className="card form view-in">
+      <div className="progress" aria-hidden="true">
+        <span style={{ width: `${((step + 1) / t.steps.length) * 100}%` }} />
+      </div>
       <ol className="stepper">
         {t.steps.map((label, i) => (
           <li key={label} className={i === step ? 'is-active' : i < step ? 'is-done' : ''}>

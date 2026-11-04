@@ -2,7 +2,12 @@ import { createContext, useContext } from 'react';
 
 export const messages = {
   de: {
-    brand: 'Test-Strom',
+    brand: 'alseda Consulting',
+    hero: {
+      title: 'Tarif berechnen, Angaben prüfen lassen',
+      text: 'Bei der Bestellung werden Ihre Angaben von unserer ESM-Lösung validiert.',
+    },
+    footer: { rights: 'Alle Rechte vorbehalten.' },
     date: {
       placeholder: 'Datum wählen',
       dialog: 'Datumsauswahl',
@@ -106,7 +111,12 @@ export const messages = {
     },
   },
   en: {
-    brand: 'Test-Strom',
+    brand: 'alseda Consulting',
+    hero: {
+      title: 'Calculate a tariff, have your details verified',
+      text: 'When you order, your details are validated by our ESM solution.',
+    },
+    footer: { rights: 'All rights reserved.' },
     date: {
       placeholder: 'Select date',
       dialog: 'Date picker',

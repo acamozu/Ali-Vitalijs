@@ -5,6 +5,7 @@ import SearchPanel from './components/SearchPanel.jsx';
 import TariffList from './components/TariffList.jsx';
 import StepForm from './components/StepForm.jsx';
 import ResultView from './components/ResultView.jsx';
+import { LinkedInIcon, WebIcon } from './components/Icons.jsx';
 import logo from './assets/alseda-logo.png';
 
 const readLang = () => {
@@ -96,8 +97,7 @@ export default function App() {
     <I18nContext.Provider value={i18n}>
       <header className="topbar">
         <span className="brand">
-          <img className="brand__logo" src={logo} alt="" />
-          <strong>{i18n.t.brand}</strong>
+          <img className="brand__logo" src={logo} alt={i18n.t.brand} />
         </span>
         <div className="lang" role="group" aria-label="Language">
           {['de', 'en'].map((l) => (
@@ -107,6 +107,14 @@ export default function App() {
           ))}
         </div>
       </header>
+      <section className="hero">
+        <div className="hero__inner">
+          <div className="hero__text">
+            <h1>{i18n.t.hero.title}</h1>
+            <p>{i18n.t.hero.text}</p>
+          </div>
+        </div>
+      </section>
       <main className={`page ${leaving ? 'is-leaving' : ''}`}>
         {(view === 'search' || view === 'tariffs') && (
           <SearchPanel
@@ -132,6 +140,29 @@ export default function App() {
           <ResultView result={result} error={error} busy={busy} onRetry={() => submit(lastForm)} onRestart={restart} />
         )}
       </main>
+      <footer className="footer">
+        <div className="footer__inner">
+          <span className="footer__brand">
+            <img src={logo} alt="" />
+            <strong>{i18n.t.brand}</strong>
+          </span>
+          <nav className="footer__links">
+            <a href="https://alseda.eu/" target="_blank" rel="noopener noreferrer" aria-label="alseda.eu" title="alseda.eu">
+              <WebIcon />
+            </a>
+            <a
+              href="https://uk.linkedin.com/company/alseda-consulting"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              title="LinkedIn"
+            >
+              <LinkedInIcon />
+            </a>
+          </nav>
+          <small>© {new Date().getFullYear()} {i18n.t.brand}. {i18n.t.footer.rights}</small>
+        </div>
+      </footer>
     </I18nContext.Provider>
   );
 }

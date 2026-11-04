@@ -87,7 +87,6 @@ export default function SearchPanel({ initial, onSearch }) {
           <span className="pill__label">{t.search.zip}</span>
           <input
             className="pill__input"
-            style={{ flexBasis: /^[a-z]/i.test(zip) ? '10ch' : '5.4ch' }}
             value={zip}
             maxLength={8}
             autoComplete="postal-code"
