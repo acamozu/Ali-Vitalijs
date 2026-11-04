@@ -31,7 +31,7 @@ export const messages = {
       custom: 'Eigenen Verbrauch eingeben',
       apply: 'Übernehmen',
       calculating: 'Wird berechnet …',
-      zipInvalid: 'Bitte eine fünfstellige Postleitzahl eingeben.',
+      zipInvalid: 'Bitte eine gültige Postleitzahl eingeben.',
       zipUnknown: 'Für diese Postleitzahl haben wir keinen Ort gefunden.',
     },
     tariffs: {
@@ -135,7 +135,7 @@ export const messages = {
       custom: 'Enter your own usage',
       apply: 'Apply',
       calculating: 'Calculating …',
-      zipInvalid: 'Please enter a five-digit postal code.',
+      zipInvalid: 'Please enter a valid postal code.',
       zipUnknown: 'We could not find a city for this postal code.',
     },
     tariffs: {

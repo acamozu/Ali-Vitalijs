@@ -13,12 +13,3 @@ export const usageOptions = [
   { kwh: 4000, persons: 4 },
   { kwh: 4500, persons: 5 },
 ];
-
-// Mock postal code lookup, the real one is not part of the verification.
-export const zipToCity = {
-  90459: 'Nürnberg',
-  10115: 'Berlin',
-  20095: 'Hamburg',
-  60311: 'Frankfurt am Main',
-  80331: 'München',
-};

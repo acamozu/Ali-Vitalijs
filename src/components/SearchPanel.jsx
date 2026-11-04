@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../i18n.js';
-import { usageOptions, zipToCity } from '../data/tariffs.js';
+import { usageOptions } from '../data/tariffs.js';
+import { cleanZip, findPlaces, isZipFormat } from '../data/postcodes.js';
 
 const locales = { de: 'de-DE', en: 'en-GB' };
 // The tariffs are local mock data, so the wait is artificial. Remove it once a real lookup is behind this.
@@ -11,6 +12,7 @@ export default function SearchPanel({ initial, onSearch }) {
   const fmt = (n) => n.toLocaleString(locales[lang]);
 
   const [zip, setZip] = useState(initial?.zip ?? '');
+  const [matches, setMatches] = useState([]); // places the typed code exists in: [{ country, place }]
   const [usage, setUsage] = useState(initial?.usage ?? usageOptions[1]);
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
@@ -21,7 +23,16 @@ export default function SearchPanel({ initial, onSearch }) {
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  const city = /^\d{5}$/.test(zip) ? zipToCity[zip] : undefined;
+  useEffect(() => {
+    let current = true;
+    if (isZipFormat(zip)) findPlaces(zip).then((m) => current && setMatches(m));
+    else setMatches([]);
+    return () => { current = false; };
+  }, [zip]);
+
+  // Same code in several countries: show the first, the tooltip lists all of them
+  const hint = matches.length > 1 ? `${matches[0].place} (${matches[0].country})` : matches[0]?.place;
+  const hintTitle = matches.map((m) => `${m.place} (${m.country})`).join('\n');
 
   useEffect(() => {
     if (!open) return undefined;
@@ -53,17 +64,18 @@ export default function SearchPanel({ initial, onSearch }) {
     setOpen((o) => !o);
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (loading) return;
-    if (!/^\d{5}$/.test(zip)) return setError(t.search.zipInvalid);
-    if (!city) return setError(t.search.zipUnknown);
+    if (!isZipFormat(zip)) return setError(t.search.zipInvalid);
+    const [found] = await findPlaces(zip);
+    if (!found) return setError(t.search.zipUnknown);
     setError('');
     setOpen(false);
     setLoading(true);
     timerRef.current = setTimeout(() => {
       setLoading(false);
-      onSearch({ zip, city, usage });
+      onSearch({ zip: zip.trim(), city: found.place, usage });
     }, SEARCH_DELAY_MS);
   };
 
@@ -75,12 +87,13 @@ export default function SearchPanel({ initial, onSearch }) {
           <span className="pill__label">{t.search.zip}</span>
           <input
             className="pill__input"
+            style={{ flexBasis: /^[a-z]/i.test(zip) ? '10ch' : '5.4ch' }}
             value={zip}
-            inputMode="numeric"
-            maxLength={5}
+            maxLength={8}
             autoComplete="postal-code"
-            onChange={(e) => setZip(e.target.value.replace(/\D/g, ''))}
+            onChange={(e) => setZip(cleanZip(e.target.value))}
           />
+          {hint && <span className="pill__hint pill__city" title={hintTitle}>{hint}</span>}
         </label>
 
         <div className="usage" ref={usageRef}>

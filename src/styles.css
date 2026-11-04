@@ -317,6 +317,9 @@ h3 { margin: 0 0 4px; }
 .pill__value strong { font-size: 1.45rem; font-weight: 600; color: #111; }
 .pill__hint { flex: none; color: var(--muted); font-size: 1.05rem; white-space: nowrap; }
 .pill__spacer { flex: 1; }
+/* City found for the postal code: right next to the digits, shortened if it does not fit */
+.pill__city { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pill__input { flex: 0 0 5.2ch; }
 .pill__chevron { flex: none; width: 22px; height: 22px; }
 
 .usage { position: relative; }
