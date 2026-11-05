@@ -133,6 +133,7 @@ function Agenda({ lang, setLang, t }) {
       <header className="ag-hero">
         <img className="ag-hero-art" src={conferenceWhite} alt="" />
         <div className="ag-hero-inner">
+          <div className="ag-hero-text">
           <p className="ag-brand">{EVENT.company}</p>
           <h1>{EVENT.title} 2026</h1>
           <p className="ag-meta">
@@ -142,6 +143,7 @@ function Agenda({ lang, setLang, t }) {
           </p>
           <LangSwitch lang={lang} setLang={setLang} />
           {status && <p className="ag-status">{status}</p>}
+          </div>
         </div>
       </header>
 

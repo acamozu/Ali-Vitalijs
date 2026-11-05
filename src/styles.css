@@ -42,7 +42,8 @@ h1, h2, h3, p { margin: 0; }
 .ag { padding: 0 0 96px; }
 .ag-hero { position: relative; overflow: hidden; background: var(--year); color: #fff; }
 .ag-hero-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; opacity: .2; pointer-events: none; user-select: none; }
-.ag-hero-inner { position: relative; max-width: 1040px; margin: 0 auto; padding: 40px 20px 44px; display: flex; flex-direction: column; gap: 10px; }
+.ag-hero-inner { position: relative; max-width: 1040px; margin: 0 auto; padding: 40px 20px 44px; }
+.ag-hero-text { display: flex; flex-direction: column; gap: 10px; }
 .ag-brand { font-weight: 600; opacity: .85; }
 .ag h1 { font-size: clamp(2rem, 7vw, 3.4rem); line-height: 1.05; letter-spacing: -.02em; font-weight: 700; }
 .ag-meta { opacity: .85; line-height: 1.6; }
@@ -91,11 +92,12 @@ h1, h2, h3, p { margin: 0; }
 
 /* wide screens: centred axis, entries alternate left / right (like the UI5 Timeline "double sided") */
 @media (min-width: 900px) {
-  .ag-hero-inner { align-items: center; text-align: center; padding: 56px 20px 60px; }
-  .ag-hero .lang { align-self: center; }
+  .ag-hero { min-height: clamp(360px, 31vw, 540px); display: flex; align-items: center; }
+  .ag-hero-inner { width: 100%; max-width: 1500px; padding: 48px; }
+  .ag-hero-text { max-width: min(560px, 46vw); }
   .ag h1 { font-size: 3rem; }
   .ag-list { --pad: 20px; padding-top: 48px; }
-  .ag-hero-art { object-position: center 85%; }
+  .ag-hero-art { inset: auto; right: max(24px, calc((100vw - 1500px) / 2 + 24px)); bottom: 0; width: auto; height: clamp(300px, 28vw, 480px); object-fit: contain; object-position: right bottom; opacity: .34; }
   .row { grid-template-columns: 1fr 48px 1fr; column-gap: 28px; }
   .bubble { width: 44px; height: 44px; }
   .row:first-child .r-node::before { top: 22px; }
