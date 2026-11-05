@@ -3,7 +3,7 @@
   --accent: #3ddc97; --accent-2: #5b8cff; --warm: #ffb454; --line: #2a5594;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "Rubik", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 h1, h2, h3, p { margin: 0; }
 .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: .72rem; color: var(--accent); font-weight: 600; }
 .date { color: var(--muted); font-size: .9rem; margin-top: 4px; }
