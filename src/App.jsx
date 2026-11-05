@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { EVENT, SLOTS, EVENT_START, EVENT_END } from "./agenda.js";
+import Splash from "./Splash.jsx";
 
 const params = new URLSearchParams(window.location.search);
 
@@ -187,5 +188,11 @@ function Agenda() {
 
 export default function App() {
   const hash = useHash();
-  return hash === "#agenda" ? <Agenda /> : <Landing />;
+  const [splash, setSplash] = useState(!params.has("nosplash"));
+  return (
+    <>
+      {hash === "#agenda" ? <Agenda /> : <Landing />}
+      {splash && <Splash onDone={() => setSplash(false)} />}
+    </>
+  );
 }
