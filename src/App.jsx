@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { EVENT, SLOTS, EVENT_START, EVENT_END } from "./agenda.js";
 import Splash from "./Splash.jsx";
-import conferenceArt from "./assets/conference.png";
+import conferenceArt from "./assets/conference.webp";
 
 const params = new URLSearchParams(window.location.search);
 
