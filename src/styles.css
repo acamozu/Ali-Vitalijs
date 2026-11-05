@@ -47,9 +47,9 @@ h1, h2, h3, p { margin: 0; }
 .ag h1 span { color: var(--year); }
 .ag-meta { color: var(--muted); line-height: 1.6; }
 .ag-status { margin-top: 12px; font-weight: 600; }
-.lang { display: flex; gap: 16px; margin-top: 6px; }
-.lang button { all: unset; cursor: pointer; font-size: .85rem; font-weight: 500; letter-spacing: .14em; color: var(--muted); padding: 4px 0; border-bottom: 2px solid transparent; }
-.lang button[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--text); }
+.lang { display: inline-flex; align-self: flex-start; margin-top: 6px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+.lang button { all: unset; cursor: pointer; padding: 6px 14px; font-size: .85rem; font-weight: 500; letter-spacing: .08em; color: var(--muted); }
+.lang button[aria-pressed="true"] { background: var(--year); color: #fff; }
 .lang-corner { position: absolute; top: 18px; right: 22px; z-index: 2; margin: 0; }
 
 .ag-list { list-style: none; margin: 0; padding: 0; }
