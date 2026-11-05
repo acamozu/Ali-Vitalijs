@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { EVENT } from "./agenda.js";
 
-const DURATION = 3600; // ms before the splash fades out
-const FADE = 600;
-
-// each word fades in one after another
-const WORDS = [
-  { t: "Welcome to the", cls: "w-small" },
-  { t: "Year-End", cls: "w-big" },
-  { t: "Conference", cls: "w-big" },
-  { t: "2026", cls: "w-year" },
-];
+const BRAND = EVENT.company; // "alseda Consulting"
+const LETTER_STEP = 90; // ms between letters
+const LETTER_FADE = 900; // ms each letter takes to fade in
+const BRAND_END = BRAND.length * LETTER_STEP + LETTER_FADE;
+const TITLE_DELAY = BRAND_END + 150; // title starts right after the last letter
+const TITLE_FADE = 1400;
+const DURATION = TITLE_DELAY + TITLE_FADE + 1100; // hold a moment, then leave
+const FADE = 700;
 
 export default function Splash({ onDone }) {
   const [leaving, setLeaving] = useState(false);
@@ -31,17 +29,21 @@ export default function Splash({ onDone }) {
 
   return (
     <div className={`splash ${leaving ? "leaving" : ""}`} onClick={skip} role="presentation">
-      <p className="s-brand">{EVENT.company}</p>
-      <h1>
-        {WORDS.map((w, i) => (
-          <span key={i} className={`word ${w.cls}`} style={{ animationDelay: `${0.4 + i * 0.55}s` }}>
-            {w.t}
+      <h1 className="s-brand" aria-label={BRAND}>
+        {[...BRAND].map((ch, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            className="letter"
+            style={{ animationDelay: `${300 + i * LETTER_STEP}ms`, animationDuration: `${LETTER_FADE}ms` }}
+          >
+            {ch === " " ? " " : ch}
           </span>
         ))}
       </h1>
-      <div className="s-line">
-        <i style={{ animationDuration: `${DURATION - 300}ms` }} />
-      </div>
+      <p className="s-title" style={{ animationDelay: `${300 + TITLE_DELAY}ms`, animationDuration: `${TITLE_FADE}ms` }}>
+        {EVENT.title} <b>2026</b>
+      </p>
     </div>
   );
 }

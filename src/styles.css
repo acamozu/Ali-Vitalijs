@@ -68,16 +68,12 @@ h1, h2, h3, p { margin: 0; }
 .item.current { scroll-margin-top: 150px; }
 
 /* splash */
-.splash { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px; text-align: center; cursor: pointer; transition: opacity .6s ease; }
+.splash { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; text-align: center; cursor: pointer; transition: opacity .7s ease; }
 .splash.leaving { opacity: 0; pointer-events: none; }
-.s-brand { text-transform: uppercase; letter-spacing: .3em; font-size: .75rem; color: var(--muted); opacity: 0; animation: reveal .9s ease .1s forwards; }
-.splash h1 { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 0; font-weight: 700; }
-.word { opacity: 0; transform: translateY(14px); filter: blur(6px); animation: reveal .9s cubic-bezier(.2,.7,.2,1) forwards; }
-.w-small { font-size: clamp(1rem, 3vw, 1.3rem); font-weight: 400; color: var(--muted); letter-spacing: .08em; margin-bottom: 10px; }
-.w-big { font-size: clamp(2.6rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -.02em; }
-.w-year { font-size: clamp(1rem, 3vw, 1.3rem); font-weight: 600; color: var(--accent); letter-spacing: .4em; margin-top: 14px; }
-.s-line { width: min(220px, 50vw); height: 1px; background: var(--line); overflow: hidden; }
-.s-line i { display: block; height: 100%; width: 0; background: var(--accent); animation: fill linear forwards; }
-@keyframes reveal { to { opacity: 1; transform: none; filter: none; } }
-@keyframes fill { to { width: 100%; } }
-@media (prefers-reduced-motion: reduce) { .word, .s-brand { animation-duration: .01s; animation-delay: 0s; } }
+.s-brand { margin: 0; font-size: clamp(2.4rem, 9vw, 5rem); font-weight: 700; letter-spacing: -.01em; display: flex; flex-wrap: wrap; justify-content: center; }
+.letter { opacity: 0; transform: translateY(0.18em); filter: blur(8px); animation-name: letter-in; animation-timing-function: cubic-bezier(.22,.7,.2,1); animation-fill-mode: forwards; }
+.s-title { margin: 0; font-size: clamp(1rem, 3.4vw, 1.6rem); color: var(--muted); letter-spacing: .14em; text-transform: uppercase; opacity: 0; filter: blur(6px); animation-name: title-in; animation-timing-function: ease-out; animation-fill-mode: forwards; }
+.s-title b { color: var(--accent); font-weight: 600; }
+@keyframes letter-in { to { opacity: 1; transform: none; filter: none; } }
+@keyframes title-in { to { opacity: 1; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .letter, .s-title { animation-duration: .01s !important; animation-delay: 0s !important; } }
