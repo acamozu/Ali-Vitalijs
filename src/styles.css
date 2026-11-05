@@ -1,5 +1,5 @@
 :root {
-  --bg: #ffffff; --surface: #f3f7fd; --surface-2: #e4edfa; --text: #002e6c; --muted: #5b6f93;
+  --bg: #eef3fa; --surface: #ffffff; --surface-2: #e1ebf8; --text: #002e6c; --muted: #5b6f93;
   --accent: #1f8a4c; --accent-2: #2f63c7; --warm: #b7791f; --line: #d3deef;
 }
 * { box-sizing: border-box; scrollbar-width: none; -ms-overflow-style: none; }
