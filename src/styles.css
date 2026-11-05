@@ -73,8 +73,8 @@ h1, h2, h3, p { margin: 0; }
 .splash.leaving { opacity: 0; pointer-events: none; }
 .s-brand { margin: 0; font-size: clamp(2.4rem, 9vw, 5rem); font-weight: 700; letter-spacing: -.01em; display: flex; flex-wrap: wrap; justify-content: center; }
 .letter { opacity: 0; transform: translateY(0.18em); filter: blur(8px); animation-name: letter-in; animation-timing-function: cubic-bezier(.22,.7,.2,1); animation-fill-mode: forwards; }
-.s-title { margin: 0; font-size: clamp(1rem, 3.4vw, 1.6rem); color: #000; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: 0; filter: blur(6px); animation-name: title-in; animation-timing-function: ease-out; animation-fill-mode: forwards; }
-.s-title b { color: inherit; font-weight: 700; }
+.s-title { margin: 0; font-size: clamp(1rem, 3.4vw, 1.6rem); color: var(--text); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: 0; filter: blur(6px); animation-name: title-in; animation-timing-function: ease-out; animation-fill-mode: forwards; }
+.s-title b { color: var(--accent); font-weight: 700; }
 @keyframes letter-in { to { opacity: 1; transform: none; filter: none; } }
 @keyframes title-in { to { opacity: 1; filter: none; } }
 @media (prefers-reduced-motion: reduce) { .letter, .s-title { animation-duration: .01s !important; animation-delay: 0s !important; } }
