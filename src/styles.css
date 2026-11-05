@@ -12,7 +12,7 @@ h1, h2, h3, p { margin: 0; }
 /* landing: QR is the hero */
 .landing { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
 .landing { position: relative; overflow: hidden; }
-.landing-bg { position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; opacity: .03; mix-blend-mode: multiply; pointer-events: none; user-select: none; z-index: 0; }
+.landing-bg { position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; opacity: .02; mix-blend-mode: multiply; pointer-events: none; user-select: none; z-index: 0; }
 .landing-inner { position: relative; z-index: 1; display: grid; gap: clamp(20px, 4vh, 40px); justify-items: center; text-align: center; width: 100%; max-width: 1240px; }
 .landing-text { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .landing .eyebrow { color: var(--year); text-transform: none; letter-spacing: .02em; font-size: clamp(1rem, 2.4vw, 1.3rem); font-weight: 600; }
