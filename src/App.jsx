@@ -57,13 +57,13 @@ function Landing() {
           <h1>
             {EVENT.title} <span>2026</span>
           </h1>
-          <p className="date">27 November 2026 · {EVENT.venue}, Frankfurt</p>
+          <p className="date">27. November 2026 · {EVENT.venue}, Frankfurt</p>
         </div>
         <div className="landing-qr">
-          <a className="qr" href="#agenda" aria-label="Open agenda">
+          <a className="qr" href="#agenda" aria-label="Agenda öffnen">
             <QRCodeSVG value={target} size={512} level="M" marginSize={0} />
           </a>
-          <p className="hint">Scan to open the live agenda</p>
+          <p className="hint">QR-Code scannen und die Live-Agenda öffnen</p>
         </div>
       </div>
     </main>
