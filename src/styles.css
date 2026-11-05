@@ -111,6 +111,21 @@ h1, h2, h3, p { margin: 0; }
   .row.current { --pad: 28px; }
 }
 
+/* cards: plain white, thin border, no shadow / gradient. Breaks stay plain lines. */
+.row:not(.break) .r-body { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; }
+.row:not(.break) .r-when { padding-top: 15px; }
+.row.past:not(.break) .r-body { background: #ffffff80; }
+.row.current:not(.break) .r-body { background: var(--year); border-color: var(--year); }
+.row.current:not(.break) .r-title, .row.current:not(.break) .r-tag { color: #fff; }
+.row.current:not(.break) .r-sub, .row.current:not(.break) .r-meta { color: #ffffffcc; }
+.row.current:not(.break) .r-progress { background: #ffffff40; }
+.row.current:not(.break) .r-progress i { background: #fff; }
+@media (min-width: 900px) {
+  .row:not(.break) .r-when { padding-top: 17px; }
+  .row.left:not(.break) .r-body { justify-self: end; max-width: 100%; }
+  .row.right:not(.break) .r-body { justify-self: start; max-width: 100%; }
+}
+
 /* splash */
 .splash { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 24px; text-align: center; cursor: pointer; transition: opacity .7s ease; }
 .splash.leaving { opacity: 0; pointer-events: none; }
