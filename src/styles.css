@@ -9,15 +9,24 @@ h1, h2, h3, p { margin: 0; }
 .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: .72rem; color: var(--accent); font-weight: 600; }
 .date { color: var(--muted); font-size: .9rem; margin-top: 4px; }
 
-/* landing */
-.landing { position: relative; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(6px, 1.6vh, 18px); padding: 16px 16px min(38vh, 51.7vw); text-align: center; }
-.landing h1 { font-size: clamp(1.6rem, min(5vw, 5.5vh), 3.4rem); font-weight: 700; line-height: 1.1; }
-.landing .eyebrow { color: var(--year); text-transform: none; letter-spacing: .02em; font-size: clamp(.95rem, 2.4vh, 1.15rem); font-weight: 600; }
+/* landing: QR is the hero */
+.landing { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+.landing-inner { display: grid; gap: clamp(20px, 4vh, 40px); justify-items: center; text-align: center; width: 100%; max-width: 1240px; }
+.landing-text { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.landing .eyebrow { color: var(--year); text-transform: none; letter-spacing: .02em; font-size: clamp(1rem, 2.4vw, 1.3rem); font-weight: 600; }
+.landing h1 { font-size: clamp(2rem, 8vw, 4.6rem); font-weight: 700; line-height: 1.05; letter-spacing: -.02em; }
 .landing h1 span { color: var(--year); }
-.qr { background: #fff; padding: clamp(10px, 2vh, 18px); border-radius: 20px; margin: clamp(2px, 1vh, 12px) 0; box-shadow: 0 20px 50px #002e6c2e; transition: transform .2s; display: block; line-height: 0; max-width: 100%; }
-.qr:hover { transform: scale(1.03); }
-.qr svg { width: min(280px, 30vh, 70vw); height: auto; display: block; }
-.landing-art { position: absolute; left: 0; bottom: 0; width: 100%; height: auto; max-height: 38vh; object-fit: cover; object-position: left bottom; mix-blend-mode: multiply; pointer-events: none; user-select: none; display: block; }
+.landing .date { font-size: clamp(.95rem, 2.2vw, 1.2rem); margin-top: 6px; }
+.landing-qr { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.qr { background: #fff; padding: clamp(14px, 2.4vw, 26px); border-radius: 24px; box-shadow: 0 24px 60px #002e6c26; display: block; line-height: 0; transition: transform .2s; }
+.qr:hover { transform: scale(1.02); }
+.qr svg { width: min(86vw, 50vh, 420px); height: auto; display: block; }
+@media (min-width: 900px) and (min-aspect-ratio: 5/4) {
+  .landing-inner { grid-template-columns: 1fr auto; gap: 6vw; justify-items: start; }
+  .landing-text { align-items: flex-start; text-align: left; }
+  .landing h1 { font-size: clamp(2.8rem, 5.4vw, 5.4rem); }
+  .qr svg { width: min(36vw, 68vh, 560px); }
+}
 .hint { color: var(--muted); letter-spacing: .05em; }
 
 /* agenda */
@@ -81,10 +90,3 @@ h1, h2, h3, p { margin: 0; }
 @keyframes letter-in { to { opacity: 1; transform: none; filter: none; } }
 @keyframes title-in { to { opacity: 1; filter: none; } }
 @media (prefers-reduced-motion: reduce) { .letter, .s-title { animation-duration: .01s !important; animation-delay: 0s !important; } }
-
-/* wide screens (PC / projector): show the illustration almost uncropped, text sits in its empty upper part */
-@media (min-aspect-ratio: 3/2) {
-  .landing { justify-content: flex-start; padding: 4vh 16px 16px; }
-  .landing-art { max-height: 100vh; max-height: 100dvh; }
-  .qr svg { width: min(280px, 26vh); }
-}

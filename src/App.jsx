@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { EVENT, SLOTS, EVENT_START, EVENT_END } from "./agenda.js";
 import Splash from "./Splash.jsx";
-import conferenceArt from "./assets/conference.webp";
 
 const params = new URLSearchParams(window.location.search);
 
@@ -50,18 +49,21 @@ function Landing() {
   const target = `${base}#agenda`;
   return (
     <main className="landing">
-      <p className="eyebrow">{EVENT.company}</p>
-      <h1>
-        {EVENT.title} <span>2026</span>
-      </h1>
-      <p className="date">
-        27 November 2026 · {EVENT.venue}, Frankfurt
-      </p>
-      <a className="qr" href="#agenda" aria-label="Open agenda">
-        <QRCodeSVG value={target} size={280} level="M" marginSize={2} />
-      </a>
-      <p className="hint">Scan to open the live agenda</p>
-      <img className="landing-art" src={conferenceArt} alt="" />
+      <div className="landing-inner">
+        <div className="landing-text">
+          <p className="eyebrow">{EVENT.company}</p>
+          <h1>
+            {EVENT.title} <span>2026</span>
+          </h1>
+          <p className="date">27 November 2026 · {EVENT.venue}, Frankfurt</p>
+        </div>
+        <div className="landing-qr">
+          <a className="qr" href="#agenda" aria-label="Open agenda">
+            <QRCodeSVG value={target} size={512} level="M" marginSize={0} />
+          </a>
+          <p className="hint">Scan to open the live agenda</p>
+        </div>
+      </div>
     </main>
   );
 }
