@@ -42,6 +42,7 @@ export default function Splash({ onDone }) {
         ))}
       </h1>
       <p className="s-title" style={{ animationDelay: `${300 + TITLE_DELAY}ms`, animationDuration: `${TITLE_FADE}ms` }}>
+        <span className="s-welcome">Welcome to the</span>
         {EVENT.title} <b>2026</b>
       </p>
     </div>
