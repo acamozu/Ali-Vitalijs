@@ -4,6 +4,7 @@ import { EVENT, SLOTS, EVENT_START, EVENT_END, TEXT } from "./agenda.js";
 import Splash from "./Splash.jsx";
 import Icon from "./Icons.jsx";
 import conferenceArt from "./assets/conference.webp";
+import conferenceWhite from "./assets/conference-white.webp";
 
 const params = new URLSearchParams(window.location.search);
 
@@ -129,21 +130,20 @@ function Agenda({ lang, setLang, t }) {
 
   return (
     <main className="ag">
-      <aside className="ag-side">
-        <p className="ag-brand">{EVENT.company}</p>
-        <h1>
-          {EVENT.title} <span>2026</span>
-        </h1>
-        <p className="ag-meta">
-          {t.dateLong}
-          <br />
-          {EVENT.venue}
-          <br />
-          {EVENT.address}
-        </p>
-        <LangSwitch lang={lang} setLang={setLang} />
-        {status && <p className="ag-status">{status}</p>}
-      </aside>
+      <header className="ag-hero">
+        <img className="ag-hero-art" src={conferenceWhite} alt="" />
+        <div className="ag-hero-inner">
+          <p className="ag-brand">{EVENT.company}</p>
+          <h1>{EVENT.title} 2026</h1>
+          <p className="ag-meta">
+            {t.dateLong} · {EVENT.venue}
+            <br />
+            {EVENT.address}
+          </p>
+          <LangSwitch lang={lang} setLang={setLang} />
+          {status && <p className="ag-status">{status}</p>}
+        </div>
+      </header>
 
       <ol className="ag-list">
         {SLOTS.map((s, i) => {
@@ -169,11 +169,20 @@ function Agenda({ lang, setLang, t }) {
                 </span>
               </div>
               <div className="r-body">
-                {isCurrent && <p className="r-tag">{t.now}</p>}
+                {isCurrent && (
+                  <p className="r-tag">
+                    {t.now} · {t.left(Math.max(1, Math.ceil((s.end - now) / 60000)))}
+                  </p>
+                )}
                 <p className="r-title">{s.title[lang]}</p>
                 {s.subtitle && <p className="r-sub">{s.subtitle[lang]}</p>}
                 {s.speaker && <p className="r-meta">{s.speaker}</p>}
                 {s.location && <p className="r-meta">{s.location}</p>}
+                {isCurrent && (
+                  <div className="r-progress">
+                    <i style={{ width: `${Math.min(100, Math.max(0, ((now - s.start) / (s.end - s.start)) * 100))}%` }} />
+                  </div>
+                )}
               </div>
             </li>
           );
