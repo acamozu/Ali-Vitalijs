@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { EVENT, SLOTS, EVENT_START, EVENT_END } from "./agenda.js";
 import Splash from "./Splash.jsx";
+import conferenceArt from "./assets/conference.png";
 
 const params = new URLSearchParams(window.location.search);
 
@@ -60,6 +61,7 @@ function Landing() {
         <QRCodeSVG value={target} size={280} level="M" marginSize={2} />
       </a>
       <p className="hint">Scan to open the live agenda</p>
+      <img className="landing-art" src={conferenceArt} alt="" />
     </main>
   );
 }
