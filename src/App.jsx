@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { EVENT, SLOTS, EVENT_START, EVENT_END } from "./agenda.js";
 import Splash from "./Splash.jsx";
+import conferenceArt from "./assets/conference.webp";
 
 const params = new URLSearchParams(window.location.search);
 
@@ -49,6 +50,7 @@ function Landing() {
   const target = `${base}#agenda`;
   return (
     <main className="landing">
+      <img className="landing-bg" src={conferenceArt} alt="" />
       <div className="landing-inner">
         <div className="landing-text">
           <p className="eyebrow">{EVENT.company}</p>
