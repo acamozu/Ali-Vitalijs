@@ -1,6 +1,6 @@
 :root {
-  --bg: #0b1220; --surface: #141c2f; --surface-2: #1b2540; --text: #e8edf7; --muted: #8b97b3;
-  --accent: #3ddc97; --accent-2: #5b8cff; --warm: #ffb454; --line: #2a3556;
+  --bg: #002e6c; --surface: #0a3b80; --surface-2: #11478f; --text: #eef3fb; --muted: #9db3d6;
+  --accent: #3ddc97; --accent-2: #5b8cff; --warm: #ffb454; --line: #2a5594;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -23,8 +23,8 @@ h1, h2, h3, p { margin: 0; }
 .agenda h1 { font-size: 1.4rem; }
 .back { color: var(--muted); text-decoration: none; font-size: 1.4rem; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); }
 
-.banner { background: linear-gradient(135deg, #123a33, #14305a); border: 1px solid #2c5a6a; border-radius: 18px; padding: 18px 20px; margin-bottom: 26px; position: sticky; top: 8px; z-index: 5; backdrop-filter: blur(6px); }
-.banner.break { background: linear-gradient(135deg, #3a2c12, #2b2438); border-color: #6a5430; }
+.banner { background: linear-gradient(135deg, #0b5a55, #0a3b80); border: 1px solid #2f7f86; border-radius: 18px; padding: 18px 20px; margin-bottom: 26px; position: sticky; top: 8px; z-index: 5; backdrop-filter: blur(6px); }
+.banner.break { background: linear-gradient(135deg, #5a4210, #11478f); border-color: #6a5430; }
 .banner h2 { font-size: 1.35rem; margin: 6px 0 4px; }
 .banner p { color: #c3cde3; font-size: .9rem; }
 .live { display: inline-flex; align-items: center; gap: 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: var(--accent); font-weight: 700; }
