@@ -12,6 +12,7 @@ h1, h2, h3, p { margin: 0; }
 /* landing */
 .landing { position: relative; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(6px, 1.6vh, 18px); padding: 16px 16px min(38vh, 51.7vw); text-align: center; }
 .landing h1 { font-size: clamp(1.6rem, min(5vw, 5.5vh), 3.4rem); font-weight: 700; line-height: 1.1; }
+.landing .eyebrow { color: var(--year); text-transform: none; letter-spacing: .02em; font-size: clamp(.95rem, 2.4vh, 1.15rem); font-weight: 600; }
 .landing h1 span { color: var(--year); }
 .qr { background: #fff; padding: clamp(10px, 2vh, 18px); border-radius: 20px; margin: clamp(2px, 1vh, 12px) 0; box-shadow: 0 20px 50px #002e6c2e; transition: transform .2s; display: block; line-height: 0; max-width: 100%; }
 .qr:hover { transform: scale(1.03); }
