@@ -54,10 +54,8 @@ export const messages = {
     },
     steps: ['Person', 'Adresse', 'Dokument'],
     form: {
-      required: 'Füllen Sie alle mit * gekennzeichneten Felder aus.',
       fullName: 'Vollständiger Name',
-      bpNumber: 'BP-Nummer',
-      bpHint: 'Optional: Wenn ausgefüllt, wird dieser bestehende Geschäftspartner geprüft. Die übrigen Angaben sind dann nicht nötig.',      tariff: 'Ihr Tarif',
+      tariff: 'Ihr Tarif',
       lastname: 'Nachname',
       firstname: 'Vorname',
       middlename: 'Zweiter Vorname',
@@ -163,10 +161,8 @@ export const messages = {
     },
     steps: ['Person', 'Address', 'Document'],
     form: {
-      required: 'Please fill in all fields marked with *.',
       fullName: 'Full name',
-      bpNumber: 'BP number',
-      bpHint: 'Optional: if filled in, this existing business partner is checked. The other details are then not needed.',      tariff: 'Your tariff',
+      tariff: 'Your tariff',
       lastname: 'Last name',
       firstname: 'First name',
       middlename: 'Middle name',

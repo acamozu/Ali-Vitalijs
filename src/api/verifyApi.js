@@ -3,10 +3,6 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
 // Fields of /AESM/STR_BP. EXTERNAL_OBJECT 'MD' = data comes from the caller, not from an SAP business partner.
 export function toPartnerStructure(f) {
-  // A BP number typed in the form: check this existing SAP business partner ('BP'), not the form data
-  if (f.bpNumber?.trim()) {
-    return { EXTERNAL_ID: 'WEBAPP', EXTERNAL_OBJECT: 'BP', BP_NUMBER: f.bpNumber.trim() };
-  }
   return {
     EXTERNAL_ID: 'WEBAPP',
     BP_NUMBER: 'NOTPROVIDED',

@@ -6,7 +6,7 @@ import DatePicker from './DatePicker.jsx';
 
 // Required = what the verification needs; middlename, building and room are optional.
 const stepFields = [
-  ['lastname', 'firstname', 'middlename', 'birthdate', 'gender', 'nationality'],
+  ['firstname', 'lastname', 'middlename', 'birthdate', 'gender', 'nationality'],
   ['street', 'houseno', 'building', 'roomno', 'zip', 'city', 'country'],
   ['docType', 'docNumber', 'docCountry'],
 ];
@@ -25,7 +25,6 @@ export default function StepForm({ tariff, search, onSubmit, onBack, busy }) {
     street: '', houseno: '', building: '', roomno: '',
     zip: search.zip, city: search.city, country: search.country || '',
     docType: '', docNumber: '', docCountry: '',
-    bpNumber: '', // typed by hand: checks this existing business partner of the SAP system
   });
   const [errors, setErrors] = useState({});
 
@@ -35,11 +34,6 @@ export default function StepForm({ tariff, search, onSubmit, onBack, busy }) {
   };
 
   const validate = (fields) => {
-    // With a BP number the check needs nothing else from the form.
-    if (values.bpNumber.trim()) {
-      setErrors({});
-      return true;
-    }
     const next = {};
     fields.forEach((f) => {
       if (!optional.has(f) && !String(values[f]).trim()) next[f] = t.form.missing;
@@ -114,14 +108,13 @@ export default function StepForm({ tariff, search, onSubmit, onBack, busy }) {
   );
 
   const countryLabel = (o) => o[lang];
-  const formRows = [
+  const summaryRows = [
     [t.form.fullName, `${values.firstname} ${values.middlename} ${values.lastname}`.replace(/\s+/g, ' ').trim()],
     [t.form.birthdate, values.birthdate],
     [t.form.street, `${values.street} ${values.houseno}`],
     [t.form.city, `${values.zip} ${values.city}`],
     [t.form.docType, [values.docType, values.docNumber].filter(Boolean).join(' · ')],
   ].filter(([, v]) => String(v).trim()); // optional fields that stay empty are not listed
-  const summaryRows = values.bpNumber.trim() ? [[t.form.bpNumber, values.bpNumber.trim()]] : formRows;
 
   return (
     <section className="card form view-in">
@@ -132,24 +125,14 @@ export default function StepForm({ tariff, search, onSubmit, onBack, busy }) {
           </li>
         ))}
       </ol>
-      <p className="muted">{t.form.required}</p>
       <p className="muted">{t.form.tariff}: <strong>{tariff.name}</strong> · {search.zip} {search.city}</p>
 
       <div key={step} className={`step-pane step-pane--${dir}`}>
       <div className="grid">
         {step === 0 && (
           <>
-            <label className="field field--wide">
-              <span>{t.form.bpNumber}</span>
-              <input
-                value={values.bpNumber}
-                inputMode="numeric"
-                onChange={(e) => set('bpNumber', e.target.value.replace(/\D/g, ''))}
-              />
-              <em className="field__hint">{t.form.bpHint}</em>
-            </label>
-            {text('lastname')}
             {text('firstname')}
+            {text('lastname')}
             {text('middlename')}
             {date('birthdate')}
             {select('gender', genders, (o) => t.gender[o.key])}
