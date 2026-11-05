@@ -4,6 +4,9 @@ import { EVENT, SLOTS, EVENT_START, EVENT_END } from "./agenda.js";
 
 const params = new URLSearchParams(window.location.search);
 
+// Public address of the deployed site (encoded in the QR code)
+const PUBLIC_URL = "https://ornate-pudding-2bac72.netlify.app/";
+
 // ?now=10:40  -> simulate a time on the event day (for testing / rehearsal)
 function useNow() {
   const sim = params.get("now");
@@ -37,8 +40,11 @@ function useHash() {
 }
 
 function Landing() {
-  // QR points to the agenda view; ?url=https://... overrides the base (e.g. LAN address / deployed URL)
-  const base = params.get("url") || window.location.href.split("#")[0].replace(/[?].*$/, "");
+  // QR always points to the public site; ?url=https://... overrides it (e.g. LAN address for testing).
+  // In dev mode we use the current address so local testing still works.
+  const base =
+    params.get("url") ||
+    (import.meta.env.DEV ? window.location.href.split("#")[0].replace(/[?].*$/, "") : PUBLIC_URL);
   const target = `${base}#agenda`;
   return (
     <main className="landing">
