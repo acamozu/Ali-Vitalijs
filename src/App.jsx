@@ -50,7 +50,6 @@ function Landing() {
   const target = `${base}#agenda`;
   return (
     <main className="landing">
-      <p className="eyebrow">{EVENT.company}</p>
       <h1>
         {EVENT.title} <span>2026</span>
       </h1>
