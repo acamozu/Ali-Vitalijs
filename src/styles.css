@@ -92,12 +92,12 @@ h1, h2, h3, p { margin: 0; }
 
 /* wide screens: centred axis, entries alternate left / right (like the UI5 Timeline "double sided") */
 @media (min-width: 900px) {
-  .ag-hero { min-height: clamp(360px, 31vw, 540px); display: flex; align-items: center; }
-  .ag-hero-inner { width: 100%; max-width: 1500px; padding: 48px; }
-  .ag-hero-text { max-width: min(560px, 46vw); }
-  .ag h1 { font-size: 3rem; }
+  .ag-hero { min-height: clamp(250px, 17vw, 320px); display: flex; align-items: center; }
+  .ag-hero-inner { width: 100%; max-width: 1500px; padding: 36px 48px; }
+  .ag-hero-text { max-width: calc(100% - min(32vw, 620px)); }
+  .ag h1 { font-size: 2.6rem; }
   .ag-list { --pad: 20px; padding-top: 48px; }
-  .ag-hero-art { inset: auto; right: max(24px, calc((100vw - 1500px) / 2 + 24px)); bottom: 0; width: auto; height: clamp(300px, 28vw, 480px); object-fit: contain; object-position: right bottom; opacity: .34; }
+  .ag-hero-art { inset: auto; right: max(24px, calc((100vw - 1500px) / 2 + 24px)); bottom: 0; width: auto; height: clamp(230px, 15.5vw, 300px); object-fit: contain; object-position: right bottom; opacity: .34; }
   .row { grid-template-columns: 1fr 48px 1fr; column-gap: 28px; }
   .bubble { width: 44px; height: 44px; }
   .row:first-child .r-node::before { top: 22px; }
