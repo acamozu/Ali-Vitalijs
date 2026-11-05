@@ -10,50 +10,51 @@ export const EVENT = {
 
 // type: session | break | social
 // "to" is optional: if missing, the item ends when the next one starts
+// title / subtitle are { de, en }; location is a plain address
 export const AGENDA = [
-  { from: "09:00", to: "09:30", type: "break", title: "Welcome Coffee & Snacks" },
-  { from: "09:30", to: "10:30", type: "session", title: "Official Welcome", speaker: "Frank", minutes: 60 },
-  { from: "10:30", to: "10:45", type: "break", title: "Break – Speaker Change" },
-  { from: "10:45", to: "11:15", type: "session", title: "Project Prospects 2027", speaker: "Oliver", minutes: 30 },
-  { from: "11:15", to: "11:30", type: "break", title: "Break – Speaker Change" },
-  { from: "11:30", to: "12:00", type: "session", title: "Load & Performance in SAP PE & TRBK", speaker: "David / Julian", minutes: 30 },
-  { from: "12:00", to: "12:30", type: "session", title: "Marketing Insights: Reflect, Connect & Celebrate", speaker: "Loredana", minutes: 30 },
-  { from: "12:30", to: "14:00", type: "break", title: "Break – Lunch" },
-  { from: "14:00", to: "14:30", type: "session", title: "AI Live Demo", speaker: "Vitalijs / Ali", minutes: 30 },
+  { from: "09:00", to: "09:30", type: "break", title: { de: "Willkommenskaffee & Snacks", en: "Welcome Coffee & Snacks" } },
+  { from: "09:30", to: "10:30", type: "session", title: { de: "Offizielle Begrüßung", en: "Official Welcome" }, speaker: "Frank" },
+  { from: "10:30", to: "10:45", type: "break", title: { de: "Pause – Referentenwechsel", en: "Break – Speaker Change" } },
+  { from: "10:45", to: "11:15", type: "session", title: { de: "Projektausblick 2027", en: "Project Prospects 2027" }, speaker: "Oliver" },
+  { from: "11:15", to: "11:30", type: "break", title: { de: "Pause – Referentenwechsel", en: "Break – Speaker Change" } },
   {
-    from: "14:30",
-    to: "15:00",
-    type: "session",
-    title: "Stablecoins: Hype or the Future of Payments?",
-    subtitle: "SAP Pay & alseda – Review 2026 and Outlook 2027",
-    speaker: "Michael",
-    minutes: 30,
+    from: "11:30", to: "12:00", type: "session",
+    title: { de: "Load & Performance in SAP PE & TRBK", en: "Load & Performance in SAP PE & TRBK" },
+    speaker: "David / Julian",
   },
   {
-    from: "15:00",
-    type: "social",
-    title: "Start of the Christmas Party",
-    subtitle: "Transfer to the Former Police Headquarters",
+    from: "12:00", to: "12:30", type: "session",
+    title: { de: "Marketing Insights: Reflect, Connect & Celebrate", en: "Marketing Insights: Reflect, Connect & Celebrate" },
+    speaker: "Loredana",
+  },
+  { from: "12:30", to: "14:00", type: "break", title: { de: "Pause – Mittagessen", en: "Break – Lunch" } },
+  { from: "14:00", to: "14:30", type: "session", title: { de: "KI-Live-Demo", en: "AI Live Demo" }, speaker: "Vitalijs / Ali" },
+  {
+    from: "14:30", to: "15:00", type: "session",
+    title: { de: "Stablecoins: Hype oder Zukunft des Zahlungsverkehrs?", en: "Stablecoins: Hype or the Future of Payments?" },
+    subtitle: { de: "SAP Pay & alseda – Rückblick 2026 und Ausblick 2027", en: "SAP Pay & alseda – Review 2026 and Outlook 2027" },
+    speaker: "Michael",
+  },
+  {
+    from: "15:00", type: "social",
+    title: { de: "Beginn der Weihnachtsfeier", en: "Start of the Christmas Party" },
+    subtitle: { de: "Transfer zum ehemaligen Polizeipräsidium", en: "Transfer to the Former Police Headquarters" },
     location: "Frankfurt am Main",
   },
   {
-    from: "16:00",
-    to: "18:00",
-    type: "social",
-    title: "Guided Lost Places Tour",
-    subtitle: "“Old Police Headquarters Frankfurt”",
+    from: "16:00", to: "18:00", type: "social",
+    title: { de: "Geführte Lost-Places-Tour", en: "Guided Lost Places Tour" },
+    subtitle: { de: "„Altes Polizeipräsidium Frankfurt“", en: "“Old Police Headquarters Frankfurt”" },
     location: "Friedrich-Ebert-Anlage 11, 60327 Frankfurt am Main",
   },
   {
-    from: "18:00",
-    type: "social",
-    title: "Transfer to Casa Isoletta",
-    subtitle: "From the Old Police Headquarters Frankfurt",
+    from: "18:00", type: "social",
+    title: { de: "Transfer zum Casa Isoletta", en: "Transfer to Casa Isoletta" },
+    subtitle: { de: "Vom Alten Polizeipräsidium Frankfurt", en: "From the Old Police Headquarters Frankfurt" },
   },
   {
-    from: "19:00",
-    type: "social",
-    title: "Dinner at Casa Isoletta",
+    from: "19:00", type: "social",
+    title: { de: "Abendessen im Casa Isoletta", en: "Dinner at Casa Isoletta" },
     location: "Babenhäuser Landstraße 1, 60599 Frankfurt am Main",
   },
 ];
@@ -65,8 +66,41 @@ export const SLOTS = AGENDA.map((a, i) => {
   const next = AGENDA[i + 1];
   const start = toDate(a.from);
   const end = a.to ? toDate(a.to) : next ? toDate(next.from) : new Date(start.getTime() + 3 * 3600e3);
-  return { ...a, id: i, start, end, to: a.to || (next ? next.from : null) };
+  const minutes = Math.round((end - start) / 60000);
+  return { ...a, id: i, start, end, minutes, hasEnd: Boolean(a.to), to: a.to || (next ? next.from : null) };
 });
 
 export const EVENT_START = SLOTS[0].start;
 export const EVENT_END = SLOTS[SLOTS.length - 1].end;
+
+// UI texts
+export const TEXT = {
+  de: {
+    dateLong: "27. November 2026",
+    dateShort: "27.11.2026",
+    scan: "QR-Code scannen und die Live-Agenda öffnen",
+    openAgenda: "Agenda öffnen",
+    back: "Zurück",
+    welcome: "Willkommen zur",
+    now: "Jetzt",
+    next: "Als Nächstes",
+    min: "Min.",
+    before: (t) => `Beginn um ${t} Uhr`,
+    after: "Die Veranstaltung ist beendet. Vielen Dank!",
+    agenda: "Programm",
+  },
+  en: {
+    dateLong: "27 November 2026",
+    dateShort: "27 Nov 2026",
+    scan: "Scan the QR code to open the live agenda",
+    openAgenda: "Open agenda",
+    back: "Back",
+    welcome: "Welcome to the",
+    now: "Now",
+    next: "Up next",
+    min: "min",
+    before: (t) => `Starts at ${t}`,
+    after: "The event has ended. Thank you!",
+    agenda: "Agenda",
+  },
+};

@@ -10,7 +10,7 @@ const TITLE_FADE = 1400;
 const DURATION = TITLE_DELAY + TITLE_FADE + 1100; // hold a moment, then leave
 const FADE = 700;
 
-export default function Splash({ onDone }) {
+export default function Splash({ t, onDone }) {
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function Splash({ onDone }) {
         ))}
       </h1>
       <p className="s-title" style={{ animationDelay: `${300 + TITLE_DELAY}ms`, animationDuration: `${TITLE_FADE}ms` }}>
-        <span className="s-welcome">Willkommen zur</span>
+        <span className="s-welcome">{t.welcome}</span>
         {EVENT.title} <b>2026</b>
       </p>
     </div>

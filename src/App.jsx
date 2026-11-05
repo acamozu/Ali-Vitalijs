@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { EVENT, SLOTS, EVENT_START, EVENT_END } from "./agenda.js";
+import { EVENT, SLOTS, EVENT_START, EVENT_END, TEXT } from "./agenda.js";
 import Splash from "./Splash.jsx";
 import conferenceArt from "./assets/conference.webp";
 
@@ -41,7 +41,43 @@ function useHash() {
   return hash;
 }
 
-function Landing() {
+// language: ?lang=en|de, else the last choice (localStorage), else German
+function useLang() {
+  const [lang, setLang] = useState(() => {
+    const q = params.get("lang");
+    if (q === "de" || q === "en") return q;
+    try {
+      const v = localStorage.getItem("lang");
+      if (v === "de" || v === "en") return v;
+    } catch {
+      /* storage not available */
+    }
+    return "de";
+  });
+  const change = (l) => {
+    setLang(l);
+    try {
+      localStorage.setItem("lang", l);
+    } catch {
+      /* storage not available */
+    }
+  };
+  return [lang, change];
+}
+
+function LangSwitch({ lang, setLang, className = "" }) {
+  return (
+    <div className={`lang ${className}`} role="group" aria-label="Language">
+      {["de", "en"].map((l) => (
+        <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
+          {l.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Landing({ lang, setLang, t }) {
   // QR always points to the public site; ?url=https://... overrides it (e.g. LAN address for testing).
   // In dev mode we use the current address so local testing still works.
   const base =
@@ -51,110 +87,33 @@ function Landing() {
   return (
     <main className="landing">
       <img className="landing-bg" src={conferenceArt} alt="" />
+      <LangSwitch lang={lang} setLang={setLang} className="lang-corner" />
       <div className="landing-inner">
         <div className="landing-text">
           <p className="eyebrow">{EVENT.company}</p>
           <h1>
             {EVENT.title} <span>2026</span>
           </h1>
-          <p className="date">27. November 2026 · {EVENT.venue}, Frankfurt</p>
+          <p className="date">
+            {t.dateLong} · {EVENT.venue}, Frankfurt
+          </p>
         </div>
         <div className="landing-qr">
-          <a className="qr" href="#agenda" aria-label="Agenda öffnen">
+          <a className="qr" href="#agenda" aria-label={t.openAgenda}>
             <QRCodeSVG value={target} size={512} level="M" marginSize={0} />
           </a>
-          <p className="hint">QR-Code scannen und die Live-Agenda öffnen</p>
+          <p className="hint">{t.scan}</p>
         </div>
       </div>
     </main>
   );
 }
 
-function Banner({ now, current, next }) {
-  let label = "";
-  let title = "";
-  let sub = "";
-  if (now < EVENT_START) {
-    label = "Starting soon";
-    title = SLOTS[0].title;
-    sub = `Doors open at ${fmt(EVENT_START)}`;
-  } else if (now >= EVENT_END) {
-    label = "Event ended";
-    title = "Thank you for joining us!";
-    sub = "See you next year";
-  } else if (current) {
-    label = current.type === "break" ? "Break right now" : "Happening now";
-    title = current.title;
-    sub =
-      `${fmt(current.start)} – ${current.to ? fmt(current.end) : "open end"}` +
-      (next ? ` · Next: ${next.title} at ${fmt(next.start)}` : "");
-  }
-  return (
-    <section className={`banner ${current ? current.type : ""}`}>
-      <span className="live">
-        <i /> {label}
-      </span>
-      <h2>{title}</h2>
-      <p>{sub}</p>
-    </section>
-  );
-}
-
-function Item({ slot, status, open, onToggle, refEl }) {
-  const hasDetail = slot.speaker || slot.subtitle || slot.location;
-  return (
-    <li ref={refEl} className={`item ${slot.type} ${status} ${open ? "open" : ""}`}>
-      <div className="time">
-        <b>{fmt(slot.start)}</b>
-        {slot.to && <small>{fmt(slot.end)}</small>}
-      </div>
-      <div className="rail">
-        <span className="dot" />
-      </div>
-      <button className="card" onClick={onToggle} disabled={!hasDetail} aria-expanded={open}>
-        <div className="head">
-          <h3>{slot.title}</h3>
-          {status === "current" && <span className="chip">NOW</span>}
-          {slot.minutes && <span className="mins">{slot.minutes} min</span>}
-        </div>
-        {slot.speaker && <p className="speaker">{slot.speaker}</p>}
-        {open && (
-          <div className="detail">
-            {slot.subtitle && <p>{slot.subtitle}</p>}
-            {slot.speaker && (
-              <p>
-                <em>Speaker:</em> {slot.speaker}
-              </p>
-            )}
-            {slot.location ? (
-              <p>
-                <em>Location:</em> {slot.location}
-              </p>
-            ) : (
-              slot.type !== "social" && (
-                <p>
-                  <em>Location:</em> {EVENT.venue}, {EVENT.address}
-                </p>
-              )
-            )}
-          </div>
-        )}
-      </button>
-    </li>
-  );
-}
-
-function Agenda() {
+function Agenda({ lang, setLang, t }) {
   const now = useNow();
-  const [openId, setOpenId] = useState(null);
   const currentRef = useRef(null);
   const scrolled = useRef(false);
-
-  const { current, next } = useMemo(() => {
-    const c = SLOTS.find((s) => now >= s.start && now < s.end) || null;
-    const n = SLOTS.find((s) => s.start > now) || null;
-    return { current: c, next: n };
-  }, [now]);
+  const current = SLOTS.find((s) => now >= s.start && now < s.end) || null;
 
   useEffect(() => {
     if (!scrolled.current && currentRef.current) {
@@ -163,30 +122,54 @@ function Agenda() {
     }
   }, [current]);
 
+  let status = "";
+  if (now < EVENT_START) status = t.before(fmt(EVENT_START));
+  else if (now >= EVENT_END) status = t.after;
+
   return (
-    <main className="agenda">
-      <header>
-        <a href="#" className="back" aria-label="Back">
-          ←
+    <main className="ag">
+      <aside className="ag-side">
+        <a className="ag-back" href="#">
+          ← {t.back}
         </a>
-        <div>
-          <p className="eyebrow">{EVENT.company}</p>
-          <h1>{EVENT.title} 2026</h1>
-          <p className="date">27 Nov 2026 · {EVENT.venue}</p>
-        </div>
-      </header>
-      <Banner now={now} current={current} next={next} />
-      <ol className="timeline">
-        {SLOTS.map((s) => (
-          <Item
-            key={s.id}
-            slot={s}
-            status={statusOf(s, now)}
-            open={openId === s.id}
-            onToggle={() => setOpenId(openId === s.id ? null : s.id)}
-            refEl={current && current.id === s.id ? currentRef : null}
-          />
-        ))}
+        <p className="ag-brand">{EVENT.company}</p>
+        <h1>
+          {EVENT.title} <span>2026</span>
+        </h1>
+        <p className="ag-meta">
+          {t.dateLong}
+          <br />
+          {EVENT.venue}
+          <br />
+          {EVENT.address}
+        </p>
+        <LangSwitch lang={lang} setLang={setLang} />
+        {status && <p className="ag-status">{status}</p>}
+      </aside>
+
+      <ol className="ag-list">
+        {SLOTS.map((s) => {
+          const st = statusOf(s, now);
+          const isCurrent = st === "current";
+          return (
+            <li key={s.id} ref={isCurrent ? currentRef : null} className={`row ${s.type} ${st}`}>
+              <time className="r-time">{fmt(s.start)}</time>
+              <span className="r-dot" aria-hidden="true" />
+              <div className="r-body">
+                {isCurrent && <p className="r-tag">{t.now}</p>}
+                <p className="r-title">{s.title[lang]}</p>
+                {s.subtitle && <p className="r-sub">{s.subtitle[lang]}</p>}
+                {s.speaker && <p className="r-meta">{s.speaker}</p>}
+                {s.location && <p className="r-meta">{s.location}</p>}
+              </div>
+              {s.type !== "break" && s.hasEnd && (
+                <span className="r-dur">
+                  {s.minutes} {t.min}
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </main>
   );
@@ -194,11 +177,22 @@ function Agenda() {
 
 export default function App() {
   const hash = useHash();
+  const [lang, setLang] = useLang();
+  const t = TEXT[lang];
   const [splash, setSplash] = useState(!params.has("nosplash"));
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   return (
     <>
-      {hash === "#agenda" ? <Agenda /> : <Landing />}
-      {splash && <Splash onDone={() => setSplash(false)} />}
+      {hash === "#agenda" ? (
+        <Agenda lang={lang} setLang={setLang} t={t} />
+      ) : (
+        <Landing lang={lang} setLang={setLang} t={t} />
+      )}
+      {splash && <Splash t={t} onDone={() => setSplash(false)} />}
     </>
   );
 }
