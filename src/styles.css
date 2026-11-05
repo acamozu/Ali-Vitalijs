@@ -40,10 +40,10 @@ h1, h2, h3, p { margin: 0; }
 /* agenda: plain editorial list - no cards, no gradients */
 :root { --past: #a3b1c9; }
 .ag { padding: 0 0 96px; }
-.ag-hero { position: relative; overflow: hidden; background: var(--year); color: #fff; }
-.ag-hero-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; opacity: .2; pointer-events: none; user-select: none; }
-.ag-hero-inner { position: relative; max-width: 1040px; margin: 0 auto; padding: 40px 20px 44px; }
-.ag-hero-text { display: flex; flex-direction: column; gap: 10px; }
+.ag-hero { position: relative; overflow: hidden; background: var(--year); color: #fff; display: flex; align-items: center; justify-content: center; min-height: clamp(280px, 22vw, 400px); }
+.ag-hero-art { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); height: 100%; width: auto; max-width: none; object-fit: contain; opacity: .22; filter: blur(2.5px); pointer-events: none; user-select: none; }
+.ag-hero-inner { position: relative; width: 100%; max-width: 1040px; padding: 40px 20px 44px; text-align: center; }
+.ag-hero-text { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .ag-brand { font-weight: 600; opacity: .85; }
 .ag h1 { font-size: clamp(2rem, 7vw, 3.4rem); line-height: 1.05; letter-spacing: -.02em; font-weight: 700; }
 .ag-meta { opacity: .85; line-height: 1.6; }
@@ -51,7 +51,7 @@ h1, h2, h3, p { margin: 0; }
 .lang { display: inline-flex; align-self: flex-start; margin-top: 6px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
 .lang button { all: unset; cursor: pointer; padding: 6px 14px; font-size: .85rem; font-weight: 500; letter-spacing: .08em; color: var(--muted); }
 .lang button[aria-pressed="true"] { background: var(--year); color: #fff; }
-.ag-hero .lang { background: transparent; border-color: #ffffff66; }
+.ag-hero .lang { align-self: center; background: transparent; border-color: #ffffff66; }
 .ag-hero .lang button { color: #ffffffcc; }
 .ag-hero .lang button[aria-pressed="true"] { background: #fff; color: var(--year); }
 .lang-corner { position: absolute; top: 18px; right: 22px; z-index: 2; margin: 0; }
@@ -92,12 +92,9 @@ h1, h2, h3, p { margin: 0; }
 
 /* wide screens: centred axis, entries alternate left / right (like the UI5 Timeline "double sided") */
 @media (min-width: 900px) {
-  .ag-hero { min-height: clamp(250px, 17vw, 320px); display: flex; align-items: center; }
-  .ag-hero-inner { width: 100%; max-width: 1500px; padding: 36px 48px; }
-  .ag-hero-text { max-width: calc(100% - min(32vw, 620px)); }
-  .ag h1 { font-size: 2.6rem; }
+  .ag-hero-inner { padding: 56px 48px; }
+  .ag h1 { font-size: 3rem; }
   .ag-list { --pad: 20px; padding-top: 48px; }
-  .ag-hero-art { inset: auto; right: max(24px, calc((100vw - 1500px) / 2 + 24px)); bottom: 0; width: auto; height: clamp(230px, 15.5vw, 300px); object-fit: contain; object-position: right bottom; opacity: .34; }
   .row { grid-template-columns: 1fr 48px 1fr; column-gap: 28px; }
   .bubble { width: 44px; height: 44px; }
   .row:first-child .r-node::before { top: 22px; }
