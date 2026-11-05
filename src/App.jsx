@@ -130,9 +130,6 @@ function Agenda({ lang, setLang, t }) {
   return (
     <main className="ag">
       <aside className="ag-side">
-        <a className="ag-back" href="#">
-          ← {t.back}
-        </a>
         <p className="ag-brand">{EVENT.company}</p>
         <h1>
           {EVENT.title} <span>2026</span>
