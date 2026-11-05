@@ -64,7 +64,13 @@ CLASS zcl_esm_web_check IMPLEMENTATION.
       ENDIF.
     ELSE.
       ls_partner-external_object = /aesm/cl_partner_handler=>con_metadata_object.
-      ls_partner-bp_number       = /aesm/cl_partner_handler=>con_not_provided.
+      " Schufa ties a reference to the name it saw first and rejects any other name under the same
+      " reference (400). Without a BP every request needs its own reference, not a shared NOTPROVIDED.
+      TRY.
+          ls_partner-bp_number = |WEB{ substring( val = cl_system_uuid=>create_uuid_c32_static( ) len = 20 ) }|.
+        CATCH cx_uuid_error.
+          ls_partner-bp_number = |WEB{ sy-datum }{ sy-uzeit }|.
+      ENDTRY.
     ENDIF.
     IF ls_partner-external_id IS INITIAL.
       ls_partner-external_id = 'WEBAPP'.

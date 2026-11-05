@@ -97,7 +97,12 @@ export default function App() {
     <I18nContext.Provider value={i18n}>
       <header className="topbar">
         <span className="brand">
-          <img className="brand__logo" src={logo} alt={i18n.t.brand} />
+          <svg className="brand__mark" viewBox="0 0 100 100" aria-hidden="true">
+            <path className="brand__leaf" d="M18 82 C18 40 44 14 88 12 C86 56 60 82 18 82 Z" />
+            <path className="brand__bolt" d="M60 26 L40 54 L53 54 L45 74 L68 44 L55 44 Z" />
+            <path className="brand__stem" d="M18 82 L8 92" strokeWidth="7" strokeLinecap="round" />
+          </svg>
+          <span className="brand__name">Öko<span>Fest</span></span>
         </span>
         <div className="lang" role="group" aria-label="Language">
           {['de', 'en'].map((l) => (

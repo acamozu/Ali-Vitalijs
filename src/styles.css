@@ -9,6 +9,7 @@
   --line: #d5d9e0;
   --accent: #002e6c; /* Alseda blue, taken from the logo */
   --accent-text: #fff;
+  --green: #2da55d; /* brand green: logo and tariff icons */
   --ok: #1f8a4c;
   --warn: #b7791f;
   --bad: #c53030;
@@ -52,7 +53,7 @@ html { scroll-behavior: smooth; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .btn, .tariff, .pill, .progress span { transition: none; }
+  .btn, .tariff, .pill { transition: none; }
   .btn:hover:not(:disabled), .tariff:hover { transform: none; }
   .view-in, .stagger, .step-pane--next, .step-pane--back { animation: none; }
   .page.is-leaving > :is(.view-in, .leaves) { transition: none; }
@@ -70,13 +71,18 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 24px;
+  /* same column as the hero and the cards: 1200px centred, 16px gutter on small screens */
+  padding: 14px max(16px, calc((100% - 1200px) / 2));
   background: var(--band);
 }
 
-.brand { display: flex; align-items: center; gap: 8px; }
-/* The logo file has built-in white space around it, the negative margin keeps the bar slim */
-.brand__logo { display: block; width: 104px; height: 104px; margin: -22px 0; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand__mark { display: block; flex: none; width: 54px; height: 54px; }
+.brand__leaf { fill: var(--green); }
+.brand__bolt { fill: #ffcd1f; }
+.brand__stem { fill: none; stroke: var(--green); }
+.brand__name { font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--green); }
+.brand__name span { font-weight: 400; }
 
 .lang { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .lang button { border: 0; background: transparent; padding: 6px 14px; cursor: pointer; font: inherit; color: var(--muted); }
@@ -92,6 +98,7 @@ body {
   margin: 0 auto;
   padding: 24px 16px 64px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* a card never makes the page wider than the screen */
   gap: 20px;
 }
 
@@ -132,8 +139,6 @@ body {
 .footer a:hover { color: #fff; }
 .footer small { flex-basis: 100%; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.18); font-size: 0.8rem; opacity: 0.8; }
 
-.progress { height: 6px; margin-bottom: 14px; border-radius: 3px; background: var(--accent-soft); overflow: hidden; }
-.progress span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #2f7be0); transition: width 0.4s ease; }
 
 h2 { margin: 0 0 12px; }
 h3 { margin: 0 0 4px; }
@@ -345,7 +350,8 @@ h3 { margin: 0 0 4px; }
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .pill:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.pill:focus-within, .pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Focus looks like hover: one clean ring, no second outline around it */
+.pill:focus-within, .pill:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .pill--button { cursor: pointer; }
 .pill__label {
   position: absolute;
@@ -427,7 +433,7 @@ h3 { margin: 0 0 4px; }
 .tariff { position: relative; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: center; margin-top: 30px; }
 .badge { position: absolute; top: -10px; left: 16px; background: var(--accent); color: var(--accent-text); padding: 2px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; }
 .tariff__main { display: flex; gap: 16px; align-items: center; }
-.tariff__icon { flex: none; width: 56px; height: 56px; color: #2da55d; }
+.tariff__icon { flex: none; width: 56px; height: 56px; color: var(--green); }
 .tariff__icon .icon-plug { display: block; width: 100%; height: 100%; }
 .tariff__perk { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; }
 .icon-check { flex: none; width: 18px; height: 18px; color: var(--text); }
@@ -444,10 +450,11 @@ h3 { margin: 0 0 4px; }
 /* Search card: raised like the tariff cards, its inputs are raised white fields on it */
 .search.card {
   background: linear-gradient(180deg, var(--accent-soft) 0%, #fff 70%);
-  box-shadow: 0 4px 10px rgba(0, 46, 108, 0.08), 0 18px 40px rgba(0, 46, 108, 0.14);
+  /* the top edge is lifted off the page just like the bottom edge */
+  box-shadow: 0 -6px 16px rgba(0, 46, 108, 0.07), 0 4px 10px rgba(0, 46, 108, 0.08), 0 18px 40px rgba(0, 46, 108, 0.14);
 }
 .search .pill { background: #fff; box-shadow: 0 2px 8px rgba(0, 46, 108, 0.12); }
-.search .pill:hover { box-shadow: 0 0 0 1px var(--accent), 0 2px 8px rgba(0, 46, 108, 0.12); }
+.search .pill:hover, .search .pill:focus-within, .search .pill:focus-visible { box-shadow: 0 0 0 1px var(--accent), 0 2px 8px rgba(0, 46, 108, 0.12); }
 /* The label sits on the border line: its upper half is the card, its lower half the white field */
 .search .pill__label { background: linear-gradient(to bottom, transparent 40%, #fff 40%); }
 
@@ -485,12 +492,33 @@ h3 { margin: 0 0 4px; }
 }
 
 @media (max-width: 900px) {
-  .tariff { grid-template-columns: 1fr; }
+  .tariff { grid-template-columns: minmax(0, 1fr); }
   .tariff__price { justify-items: start; }
 }
 
+/* Phones: the consumption field (value, unit, persons, arrow) has to fit into the narrow field */
+@media (max-width: 480px) {
+  .brand { gap: 8px; }
+  .brand__mark { width: 40px; height: 40px; }
+  .brand__name { font-size: 26px; }
+  .pill { padding: 0 16px; gap: 8px; }
+  .pill__value strong { font-size: 1.25rem; }
+  .pill__hint { font-size: 0.95rem; }
+  .pill__spacer + .pill__hint { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 340px) {
+  .pill__spacer + .pill__hint { display: none; }
+}
+/* Narrow phones: only the current step shows its name, the others are just the number */
+@media (max-width: 400px) {
+  .stepper { gap: 4px; }
+  .stepper li { min-width: 0; }
+  .stepper li:not(.is-active) { font-size: 0; gap: 0; justify-content: center; }
+  .stepper li.is-active { flex: 3; }
+}
+
 @media (max-width: 720px) {
-  .search__row, .tariff, .grid { grid-template-columns: 1fr; }
+  .search__row, .tariff, .grid { grid-template-columns: minmax(0, 1fr); }
   .usage__popover { width: 100%; }
   .tariff__price { justify-items: start; }
 }

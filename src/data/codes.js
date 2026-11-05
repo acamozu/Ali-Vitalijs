@@ -1,7 +1,7 @@
 // Code lists for the fields of /AESM/STR_BP.
 // TODO: verify against the SAP side before the first real call:
 //  - GENDER (CHAR 1): values of the domain behind /AESM/DTE_GENDER
-//  - NATIO / COUNTRY / DOC_COUNTRY (CHAR 3): ISO alpha-3 assumed (e.g. BLR)
+//  - NATIO / COUNTRY / DOC_COUNTRY: ISO alpha-2 like SAP's LAND1 (the blocklist stores 'RU')
 //  - DOCUM_TYPE (CHAR 30): which values aESM expects
 export const genders = [
   { value: 'M', key: 'male' },
@@ -16,20 +16,20 @@ export const docTypes = [
 ];
 
 export const countries = [
-  { value: 'DEU', de: 'Deutschland', en: 'Germany' },
-  { value: 'AUT', de: 'Österreich', en: 'Austria' },
-  { value: 'CHE', de: 'Schweiz', en: 'Switzerland' },
-  { value: 'TUR', de: 'Türkei', en: 'Turkey' },
-  { value: 'POL', de: 'Polen', en: 'Poland' },
-  { value: 'BLR', de: 'Belarus', en: 'Belarus' },
-  { value: 'RUS', de: 'Russland', en: 'Russia' },
-  { value: 'UKR', de: 'Ukraine', en: 'Ukraine' },
-  { value: 'FRA', de: 'Frankreich', en: 'France' },
-  { value: 'ITA', de: 'Italien', en: 'Italy' },
-  { value: 'ESP', de: 'Spanien', en: 'Spain' },
-  { value: 'NLD', de: 'Niederlande', en: 'Netherlands' },
-  { value: 'GBR', de: 'Vereinigtes Königreich', en: 'United Kingdom' },
-  { value: 'USA', de: 'USA', en: 'USA' },
+  { value: 'DE', de: 'Deutschland', en: 'Germany' },
+  { value: 'AT', de: 'Österreich', en: 'Austria' },
+  { value: 'CH', de: 'Schweiz', en: 'Switzerland' },
+  { value: 'TR', de: 'Türkei', en: 'Turkey' },
+  { value: 'PL', de: 'Polen', en: 'Poland' },
+  { value: 'BY', de: 'Belarus', en: 'Belarus' },
+  { value: 'RU', de: 'Russland', en: 'Russia' },
+  { value: 'UA', de: 'Ukraine', en: 'Ukraine' },
+  { value: 'FR', de: 'Frankreich', en: 'France' },
+  { value: 'IT', de: 'Italien', en: 'Italy' },
+  { value: 'ES', de: 'Spanien', en: 'Spain' },
+  { value: 'NL', de: 'Niederlande', en: 'Netherlands' },
+  { value: 'GB', de: 'Vereinigtes Königreich', en: 'United Kingdom' },
+  { value: 'US', de: 'USA', en: 'USA' },
 ];
 
 // Flow control status (/AESM/DOM_FL_STATUS) -> what the web app shows.

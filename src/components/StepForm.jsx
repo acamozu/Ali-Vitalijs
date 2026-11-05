@@ -22,7 +22,8 @@ export default function StepForm({ tariff, search, onSubmit, onBack, busy }) {
   const [dir, setDir] = useState('next'); // slide direction of the step change
   const [values, setValues] = useState({
     lastname: '', firstname: '', middlename: '', birthdate: '', gender: '', nationality: '',
-    street: '', houseno: '', building: '', roomno: '', zip: '', city: '', country: '',
+    street: '', houseno: '', building: '', roomno: '',
+    zip: search.zip, city: search.city, country: search.country || '',
     docType: '', docNumber: '', docCountry: '',
     bpNumber: '', // typed by hand: checks this existing business partner of the SAP system
   });
@@ -124,9 +125,6 @@ export default function StepForm({ tariff, search, onSubmit, onBack, busy }) {
 
   return (
     <section className="card form view-in">
-      <div className="progress" aria-hidden="true">
-        <span style={{ width: `${((step + 1) / t.steps.length) * 100}%` }} />
-      </div>
       <ol className="stepper">
         {t.steps.map((label, i) => (
           <li key={label} className={i === step ? 'is-active' : i < step ? 'is-done' : ''}>

@@ -1,9 +1,9 @@
 // Mock data only: the tariff is not sent to SAP, the verification does not depend on it.
 export const tariffs = [
-  { id: 'eco24-a', name: 'ÖkoStrom24', term: 24, usagePrice: 33.8, basePrice: 18.9, bonus: 95, yearly: 824, popular: true },
-  { id: 'eco24-b', name: 'ÖkoStrom24', term: 24, usagePrice: 33.8, basePrice: 18.9, bonus: 200, yearly: 872, popular: true },
-  { id: 'eco12-a', name: 'ÖkoStrom12', term: 12, usagePrice: 34.2, basePrice: 18.9, bonus: 70, yearly: 854 },
-  { id: 'eco12-b', name: 'ÖkoStrom12', term: 12, usagePrice: 34.2, basePrice: 18.9, bonus: 200, yearly: 882 },
+  { id: 'eco24-a', name: 'Frischstrom24', term: 24, usagePrice: 33.8, basePrice: 18.9, bonus: 95, yearly: 824, popular: true },
+  { id: 'eco24-b', name: 'Frischstrom24', term: 24, usagePrice: 33.8, basePrice: 18.9, bonus: 200, yearly: 872, popular: true },
+  { id: 'eco12-a', name: 'Sonnenwind Basis', term: 12, usagePrice: 34.2, basePrice: 18.9, bonus: 70, yearly: 854 },
+  { id: 'eco12-b', name: 'Sonnenwind Basis', term: 12, usagePrice: 34.2, basePrice: 18.9, bonus: 200, yearly: 882 },
 ];
 
 export const usageOptions = [

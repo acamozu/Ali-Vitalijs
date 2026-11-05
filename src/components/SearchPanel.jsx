@@ -75,7 +75,7 @@ export default function SearchPanel({ initial, onSearch }) {
     setLoading(true);
     timerRef.current = setTimeout(() => {
       setLoading(false);
-      onSearch({ zip: zip.trim(), city: found.place, usage });
+      onSearch({ zip: zip.trim(), city: found.place, country: found.country, usage });
     }, SEARCH_DELAY_MS);
   };
 
