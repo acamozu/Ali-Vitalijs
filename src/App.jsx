@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { EVENT, SLOTS, EVENT_START, EVENT_END, TEXT } from "./agenda.js";
 import Splash from "./Splash.jsx";
+import Icon from "./Icons.jsx";
 import conferenceArt from "./assets/conference.webp";
 
 const params = new URLSearchParams(window.location.search);
@@ -148,13 +149,28 @@ function Agenda({ lang, setLang, t }) {
       </aside>
 
       <ol className="ag-list">
-        {SLOTS.map((s) => {
+        {SLOTS.map((s, i) => {
           const st = statusOf(s, now);
           const isCurrent = st === "current";
           return (
-            <li key={s.id} ref={isCurrent ? currentRef : null} className={`row ${s.type} ${st}`}>
-              <time className="r-time">{fmt(s.start)}</time>
-              <span className="r-dot" aria-hidden="true" />
+            <li
+              key={s.id}
+              ref={isCurrent ? currentRef : null}
+              className={`row ${s.type} ${st} ${i % 2 === 0 ? "left" : "right"}`}
+            >
+              <div className="r-when">
+                <time>{fmt(s.start)}</time>
+                {s.hasEnd && s.type !== "break" && (
+                  <span>
+                    {s.minutes} {t.min}
+                  </span>
+                )}
+              </div>
+              <div className="r-node" aria-hidden="true">
+                <span className="bubble">
+                  <Icon name={s.icon} size={s.type === "break" ? 15 : 20} />
+                </span>
+              </div>
               <div className="r-body">
                 {isCurrent && <p className="r-tag">{t.now}</p>}
                 <p className="r-title">{s.title[lang]}</p>
@@ -162,11 +178,6 @@ function Agenda({ lang, setLang, t }) {
                 {s.speaker && <p className="r-meta">{s.speaker}</p>}
                 {s.location && <p className="r-meta">{s.location}</p>}
               </div>
-              {s.type !== "break" && s.hasEnd && (
-                <span className="r-dur">
-                  {s.minutes} {t.min}
-                </span>
-              )}
             </li>
           );
         })}
