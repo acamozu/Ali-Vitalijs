@@ -12,8 +12,15 @@ export async function fetchOffset() {
     const t1 = Date.now();
     const date = res.headers.get("date");
     if (date) {
-      const age = Number(res.headers.get("age") || 0) * 1000; // cached copies: Date is the generation time
-      const server = new Date(date).getTime() + age + 500; // header has 1 s resolution: +0.5 s on average
+      // Netlify serves this 404 from its edge cache with a fresh Date header but an Age of hours, so adding Age
+      // would put the clock hours ahead. Other CDNs send the original (old) Date plus the Age. Which one this is
+      // can be told by the device clock: it is never hours off, so take the candidate closer to it.
+      const age = Number(res.headers.get("age") || 0) * 1000;
+      const base = new Date(date).getTime();
+      const mid = (t0 + t1) / 2;
+      let server = base;
+      if (age > 5000 && Math.abs(base + age - mid) < Math.abs(base - mid)) server = base + age;
+      server += 500; // header has 1 s resolution: +0.5 s on average
       return { offset: server + (t1 - t0) / 2 - t1, source: "server" };
     }
   } catch {

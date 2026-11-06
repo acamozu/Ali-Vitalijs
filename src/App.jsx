@@ -169,9 +169,10 @@ function Landing({ lang, setLang, t }) {
           </p>
         </div>
         <div className="landing-qr">
-          <a className="qr" href="#agenda" aria-label={t.openAgenda}>
+          {/* not a link: the agenda is opened by scanning the code with a phone, not by clicking it */}
+          <div className="qr" role="img" aria-label={t.scan}>
             <QRCodeSVG value={target} size={512} level="M" marginSize={0} />
-          </a>
+          </div>
           <p className="hint">{t.scan}</p>
         </div>
       </div>
@@ -269,6 +270,11 @@ function Agenda({ lang, setLang, t, ready }) {
       if (st === "past") targetY = geo[i].top + geo[i].h;
       else if (st === "current") targetY = geo[i].top + ringProgress(s, st, nw) * geo[i].h;
     });
+    if (statusOf(sl[sl.length - 1], nw) === "past") {
+      // programme over: the dot rests fully inside the bottom end of the bar (not half cut off)
+      const barW = parseFloat(getComputedStyle(ol).getPropertyValue("--bar-w")) || 8;
+      targetY -= barW * 0.875;
+    }
     if (targetY <= 0) {
       setPhase(2);
       return undefined;
@@ -335,6 +341,7 @@ function Agenda({ lang, setLang, t, ready }) {
     return () => window.clearTimeout(id);
   }, [phase]);
 
+  const ended = now >= slots[slots.length - 1].end; // the whole programme is over
   let status = "";
   if (now < slots[0].start) status = t.before(fmt(slots[0].start));
   else if (now >= slots[slots.length - 1].end) status = t.after;
@@ -579,7 +586,7 @@ function Agenda({ lang, setLang, t, ready }) {
           })}
         </ol>
       ) : (
-        <ol className={`bd ${phase < 2 ? "intro" : ""}`} ref={olRef}>
+        <ol className={`bd ${phase < 2 ? "intro" : ""} ${ended ? "ended" : ""}`} ref={olRef}>
           {slots.map((s, i) => {
             const st = statusOf(s, now);
             const isCurrent = st === "current";
@@ -593,7 +600,7 @@ function Agenda({ lang, setLang, t, ready }) {
               <li
                 key={s.id}
                 ref={isCurrent ? currentRef : null}
-                className={`bd-row ${s.type} ${st} ${i % 2 === 0 ? "left" : "right"}`}
+                className={`bd-row ${s.type} ${st} ${i % 2 === 0 ? "left" : "right"} ${ended && i === slots.length - 1 ? "last-ended" : ""}`}
                 style={{ "--rp": phase === 0 ? 0 : ringProgress(s, st, now) }}
               >
                 <div className="bd-time">
