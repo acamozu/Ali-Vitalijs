@@ -22,13 +22,8 @@ export default function Splash({ t, onDone }) {
     };
   }, [onDone]);
 
-  const skip = () => {
-    setLeaving(true);
-    setTimeout(onDone, FADE);
-  };
-
   return (
-    <div className={`splash ${leaving ? "leaving" : ""}`} onClick={skip} role="presentation">
+    <div className={`splash ${leaving ? "leaving" : ""}`} role="presentation">
       <h1 className="s-brand" aria-label={BRAND}>
         {[...BRAND].map((ch, i) => (
           <span

@@ -12,11 +12,11 @@ export const EVENT = {
 // "to" is optional: if missing, the item ends when the next one starts
 // title / subtitle are { de, en }; location is a plain address
 export const AGENDA = [
-  { icon: "coffee", from: "09:00", to: "09:30", type: "break", title: { de: "Willkommenskaffee & Snacks", en: "Welcome Coffee & Snacks" } },
+  { section: { de: "Konferenz", en: "Conference" }, icon: "coffee", from: "09:00", to: "09:30", type: "break", title: { de: "Willkommens\u00adkaffee & Snacks", en: "Welcome Coffee & Snacks" } },
   { icon: "hand", from: "09:30", to: "10:30", type: "session", title: { de: "Offizielle Begrüßung", en: "Official Welcome" }, speaker: "Frank" },
-  { icon: "coffee", from: "10:30", to: "10:45", type: "break", title: { de: "Pause – Referentenwechsel", en: "Break – Speaker Change" } },
-  { icon: "chart", from: "10:45", to: "11:15", type: "session", title: { de: "Projektausblick 2027", en: "Project Prospects 2027" }, speaker: "Oliver" },
-  { icon: "coffee", from: "11:15", to: "11:30", type: "break", title: { de: "Pause – Referentenwechsel", en: "Break – Speaker Change" } },
+  { icon: "coffee", from: "10:30", to: "10:45", type: "break", title: { de: "Pause – Referenten\u00adwechsel", en: "Break – Speaker Change" } },
+  { icon: "chart", from: "10:45", to: "11:15", type: "session", title: { de: "Projekt\u00adausblick 2027", en: "Project Prospects 2027" }, speaker: "Oliver" },
+  { icon: "coffee", from: "11:15", to: "11:30", type: "break", title: { de: "Pause – Referenten\u00adwechsel", en: "Break – Speaker Change" } },
   {
     icon: "gauge",
     from: "11:30", to: "12:00", type: "session",
@@ -34,29 +34,31 @@ export const AGENDA = [
   {
     icon: "coin",
     from: "14:30", to: "15:00", type: "session",
-    title: { de: "Stablecoins: Hype oder Zukunft des Zahlungsverkehrs?", en: "Stablecoins: Hype or the Future of Payments?" },
+    title: { de: "Stablecoins: Hype oder Zukunft des Zahlungs\u00adverkehrs?", en: "Stablecoins: Hype or the Future of Payments?" },
     subtitle: { de: "SAP Pay & alseda – Rückblick 2026 und Ausblick 2027", en: "SAP Pay & alseda – Review 2026 and Outlook 2027" },
     speaker: "Michael",
   },
   {
+    section: { de: "Weihnachts\u00adfeier", en: "Christmas Party" },
     icon: "star",
     from: "15:00", type: "social",
-    title: { de: "Beginn der Weihnachtsfeier", en: "Start of the Christmas Party" },
-    subtitle: { de: "Transfer zum ehemaligen Polizeipräsidium", en: "Transfer to the Former Police Headquarters" },
-    location: "Frankfurt am Main",
+    title: { de: "Beginn der Weihnachts\u00adfeier", en: "Start of the Christmas Party" },
+    subtitle: { de: "Transfer zum ehemaligen Polizei\u00adpräsidium", en: "Transfer to the Former Police Headquarters" },
+    location: "Friedrich-Ebert-Anlage 11, 60327 Frankfurt am Main",
   },
   {
     icon: "pin",
     from: "16:00", to: "18:00", type: "social",
     title: { de: "Geführte Lost-Places-Tour", en: "Guided Lost Places Tour" },
-    subtitle: { de: "„Altes Polizeipräsidium Frankfurt“", en: "“Old Police Headquarters Frankfurt”" },
+    subtitle: { de: "„Altes Polizei\u00adpräsidium Frankfurt“", en: "“Old Police Headquarters Frankfurt”" },
     location: "Friedrich-Ebert-Anlage 11, 60327 Frankfurt am Main",
   },
   {
     icon: "bus",
     from: "18:00", type: "social",
     title: { de: "Transfer zum Casa Isoletta", en: "Transfer to Casa Isoletta" },
-    subtitle: { de: "Vom Alten Polizeipräsidium Frankfurt", en: "From the Old Police Headquarters Frankfurt" },
+    location: "Friedrich-Ebert-Anlage 11, 60327 Frankfurt am Main",
+    subtitle: { de: "Vom Alten Polizei\u00adpräsidium Frankfurt", en: "From the Old Police Headquarters Frankfurt" },
   },
   {
     icon: "food",
@@ -66,17 +68,19 @@ export const AGENDA = [
   },
 ];
 
-const toDate = (hhmm) => new Date(`${EVENT.date}T${hhmm}:00${EVENT.tz}`);
+// resolve start/end Dates for a given calendar day; open-ended items end where the next begins (last: +3h)
+export function buildSlots(date, tz) {
+  const toDate = (hhmm) => new Date(`${date}T${hhmm}:00${tz}`);
+  return AGENDA.map((a, i) => {
+    const next = AGENDA[i + 1];
+    const start = toDate(a.from);
+    const end = a.to ? toDate(a.to) : next ? toDate(next.from) : new Date(start.getTime() + 3 * 3600e3);
+    const minutes = Math.round((end - start) / 60000);
+    return { ...a, id: i, start, end, minutes, hasEnd: Boolean(a.to), to: a.to || (next ? next.from : null) };
+  });
+}
 
-// resolve start/end Dates; open-ended items end where the next begins (last: +3h)
-export const SLOTS = AGENDA.map((a, i) => {
-  const next = AGENDA[i + 1];
-  const start = toDate(a.from);
-  const end = a.to ? toDate(a.to) : next ? toDate(next.from) : new Date(start.getTime() + 3 * 3600e3);
-  const minutes = Math.round((end - start) / 60000);
-  return { ...a, id: i, start, end, minutes, hasEnd: Boolean(a.to), to: a.to || (next ? next.from : null) };
-});
-
+export const SLOTS = buildSlots(EVENT.date, EVENT.tz);
 export const EVENT_START = SLOTS[0].start;
 export const EVENT_END = SLOTS[SLOTS.length - 1].end;
 
@@ -92,9 +96,11 @@ export const TEXT = {
     left: (m) => `noch ${m} Min.`,
     next: "Als Nächstes",
     min: "Min.",
+    openEnd: "Ende offen",
     before: (t) => `Beginn um ${t} Uhr`,
     after: "Die Veranstaltung ist beendet. Vielen Dank!",
     agenda: "Programm",
+    rights: "Alle Rechte vorbehalten.",
   },
   en: {
     dateLong: "27 November 2026",
@@ -106,8 +112,10 @@ export const TEXT = {
     left: (m) => `${m} min left`,
     next: "Up next",
     min: "min",
+    openEnd: "Open end",
     before: (t) => `Starts at ${t}`,
     after: "The event has ended. Thank you!",
     agenda: "Agenda",
+    rights: "All rights reserved.",
   },
 };
