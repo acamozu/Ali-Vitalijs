@@ -66,6 +66,36 @@ function ringProgress(slot, st, now) {
   return Math.min(1, Math.max(0, (now - slot.start) / (slot.end - slot.start)));
 }
 
+// cubic-bezier(x1, y1, x2, y2) as a function of time (same maths as CSS easing)
+function cubicBezier(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const X = (t) => ((ax * t + bx) * t + cx) * t;
+  const Y = (t) => ((ay * t + by) * t + cy) * t;
+  const dX = (t) => (3 * ax * t + 2 * bx) * t + cx;
+  return (x) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let t = x;
+    for (let i = 0; i < 8; i++) {
+      const err = X(t) - x;
+      if (Math.abs(err) < 1e-5) return Y(t);
+      const d = dX(t);
+      if (Math.abs(d) < 1e-6) break;
+      t -= err / d;
+    }
+    let lo = 0, hi = 1;
+    t = x;
+    for (let i = 0; i < 24; i++) {
+      const v = X(t);
+      if (Math.abs(v - x) < 1e-5) break;
+      if (v < x) lo = t; else hi = t;
+      t = (lo + hi) / 2;
+    }
+    return Y(t);
+  };
+}
+
 function statusOf(slot, now) {
   if (now >= slot.end) return "past";
   if (now >= slot.start) return "current";
@@ -187,6 +217,19 @@ function Agenda({ lang, setLang, t, ready }) {
   // intro: when the page appears, the dot runs down the bar from the top and stops at the current time.
   // phase 0 = running, 1 = real fill revealed under the overlay, 2 = done (live mode)
   const [phase, setPhase] = useState(layout === "bands" && !reduced ? 0 : 2);
+  // the intro measures the rows, so it waits until the web font is in (otherwise rows reflow after the measurement)
+  const [fontsOk, setFontsOk] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const ok = () => alive && setFontsOk(true);
+    if (document.fonts?.ready) document.fonts.ready.then(ok, ok);
+    else ok();
+    const guard = window.setTimeout(ok, 1500); // never wait longer than this
+    return () => {
+      alive = false;
+      window.clearTimeout(guard);
+    };
+  }, []);
   const current = slots.find((s) => now >= s.start && now < s.end) || null;
   const parts = [];
   slots.forEach((s, i) => {
@@ -202,7 +245,7 @@ function Agenda({ lang, setLang, t, ready }) {
   }, [current, ready, phase]);
 
   useEffect(() => {
-    if (!ready || phase !== 0) return undefined;
+    if (!ready || !fontsOk || phase !== 0) return undefined;
     const ol = olRef.current;
     const fill = ol?.querySelector(".bd-fill");
     const dot = ol?.querySelector(".bd-dot");
@@ -235,43 +278,53 @@ function Agenda({ lang, setLang, t, ready }) {
     const a1 = fill.animate([{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }], opts);
     const a2 = dot.animate([{ transform: "translateY(0px)" }, { transform: `translateY(${targetY}px)` }], opts);
 
-    // The page moves with the dot, but WITHOUT scrolling: the whole page is translated with the same
-    // easing and duration (compositor animation), and at the end it is swapped for a real scroll position
-    // in one step (same pixels, no jump). Nothing runs on the main thread while the bar fills.
-    const main = ol.closest("main");
+    // The page scrolls together with the dot: same easing and duration, one scroll step per frame.
+    // Dot and bar run on the compositor, so the scroll is the only work left; there is nothing to swap at the end.
     const olPageTop = olRect.top + window.scrollY;
     const y0 = window.scrollY;
     let focusY = targetY;
     sl.forEach((s, i) => {
-      if (statusOf(s, nw) === "current") focusY = geo[i].top + geo[i].h / 2; // same spot as the final centring
+      if (statusOf(s, nw) === "current") focusY = geo[i].top + geo[i].h / 2; // same spot as the pill / centring
     });
     const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     const scrollTarget = Math.min(maxScroll, Math.max(0, olPageTop + focusY - window.innerHeight / 2));
-    const delta = Math.max(0, scrollTarget - y0);
-    let a3 = null;
-    if (main && delta > 0) {
-      a3 = main.animate([{ transform: "translateY(0px)" }, { transform: `translateY(${-delta}px)` }], opts);
-    }
     scrolled.current = true; // this intro already centres the current slot; skip the extra smooth scroll
 
+    const ease = cubicBezier(0.65, 0, 0.35, 1); // same curve as the dot / bar animation
+    const t0 = performance.now();
+    let stopped = false; // the visitor took over: stop moving the page
+    const stop = () => {
+      stopped = true;
+    };
+    const stopEvents = ["wheel", "touchstart", "keydown", "mousedown"];
+    stopEvents.forEach((n) => window.addEventListener(n, stop, { passive: true, once: true }));
+    let raf = 0;
+    const follow = (ts) => {
+      if (stopped) return;
+      const k = Math.min(1, (ts - t0) / duration);
+      window.scrollTo(0, y0 + (scrollTarget - y0) * ease(k));
+      if (k < 1) raf = requestAnimationFrame(follow);
+    };
+    raf = requestAnimationFrame(follow);
+
     let finished = false;
-    Promise.all([a1.finished, a2.finished, a3 ? a3.finished : Promise.resolve()])
+    Promise.all([a1.finished, a2.finished])
       .then(() => {
         finished = true;
-        // same task: real scroll to the translated position, then drop the transform -> identical frame
-        if (a3) window.scrollTo(0, y0 + delta);
-        a3?.cancel();
+        cancelAnimationFrame(raf);
+        if (!stopped) window.scrollTo(0, scrollTarget);
         setPhase(1);
       })
       .catch(() => {});
     return () => {
+      cancelAnimationFrame(raf);
+      stopEvents.forEach((n) => window.removeEventListener(n, stop));
       if (!finished) {
         a1.cancel();
         a2.cancel();
-        a3?.cancel();
       }
     };
-  }, [ready, phase]);
+  }, [ready, fontsOk, phase]);
 
   // phase 1: the real per-slot fill is already underneath the overlay; drop the overlay a moment later
   useEffect(() => {
@@ -315,10 +368,12 @@ function Agenda({ lang, setLang, t, ready }) {
               className="ag-live"
               onClick={() => currentRef.current?.scrollIntoView({ block: "center", behavior: "smooth" })}
             >
-              <i aria-hidden="true" />
-              <span className="ag-live-text">
-                {t.now}: {current.title[lang]}
+              <span className="ag-live-now">
+                <i aria-hidden="true" />
+                {t.now}
+                <span className="ag-live-colon">:</span>
               </span>
+              <span className="ag-live-text">{current.title[lang]}</span>
               <span className="ag-live-left">{t.left(Math.max(1, Math.ceil((current.end - now) / 60000)))}</span>
             </button>
           )}
