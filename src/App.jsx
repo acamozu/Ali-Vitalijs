@@ -184,9 +184,11 @@ function Landing({ lang, setLang, t }) {
 function Footer({ t, className }) {
   return (
     <footer className={className}>
-      <img className="lf-logo" src={logo} alt={EVENT.company} />
-      <small>
-        © {new Date().getFullYear()} {EVENT.company}. {t.rights}
+      <small className="lf-copy">
+        <img className="lf-logo" src={logo} alt={EVENT.company} />
+        <span>
+          © {new Date().getFullYear()} {t.rights}
+        </span>
       </small>
       <nav className="lf-links">
         <a href="https://alseda.eu/" target="_blank" rel="noopener noreferrer" aria-label="alseda.eu" title="alseda.eu">

@@ -49,14 +49,17 @@ h1, h2, h3, p { margin: 0; }
 }
 /* landing footer: centred at the bottom, no fill - same content as the stromplus footer */
 .landing { padding-bottom: 76px; }
-.landing-footer { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 10px; padding: 0 12px max(10px, env(safe-area-inset-bottom)); color: #2b364d; white-space: nowrap; }
-.lf-logo { width: 52px; height: 52px; object-fit: contain; flex: none; }
-.lf-links { display: flex; gap: 2px; flex: none; }
-.lf-links a { display: grid; place-items: center; width: 32px; height: 32px; color: inherit; text-decoration: none; }
+.landing-footer { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; --f: 14px; font-size: var(--f); gap: calc(var(--f) * .9); padding: 0 12px max(10px, env(safe-area-inset-bottom)); color: #2b364d; white-space: nowrap; }
+/* footer sizes all derive from one font size (--f): logo wordmark ~1.6x text height, icons ~1.5x, gaps ~half a line */
+.lf-logo { width: calc(var(--f) * 4.2); height: calc(var(--f) * 4.2); object-fit: contain; flex: none; margin: calc(var(--f) * -1.3) 0; }
+.lf-copy { display: inline-flex; align-items: center; gap: calc(var(--f) * .5); white-space: nowrap; }
+.lf-links { display: flex; gap: calc(var(--f) * .2); flex: none; }
+.lf-links a { display: grid; place-items: center; width: max(32px, calc(var(--f) * 2.4)); height: max(32px, calc(var(--f) * 2.4)); color: inherit; text-decoration: none; }
 .lf-links a:hover { color: var(--year); }
-.icon-social { width: 19px; height: 19px; }
-.landing-footer small { font-size: .78rem; opacity: .8; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 520px) { .landing-footer { gap: 6px; } .lf-logo { width: 40px; height: 40px; } .landing-footer small { font-size: .68rem; } }
+.icon-social { width: calc(var(--f) * 1.5); height: calc(var(--f) * 1.5); }
+.landing-footer small { font-size: var(--f); opacity: .85; }
+@media (max-width: 520px) { .landing-footer { --f: 12px; } }
+@media (max-width: 350px) { .landing-footer { --f: 11px; } }
 .hint { color: #2b364d; letter-spacing: .05em; }
 
 /* agenda: plain editorial list - no cards, no gradients */
