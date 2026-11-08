@@ -523,3 +523,9 @@ h1, h2, h3, p { margin: 0; }
 .bd:not(.intro) .bd-row.last-ended .bd-now { opacity: 1; top: calc(100% - var(--bar-w, 8px) * 0.875); }
 .bd-row.last-ended .bd-now::after { display: none; }
 .bd.ended .bd-dot::after { display: none; }
+
+/* desktop: cover, list and footer share one centred column of the same width */
+@media (min-width: 900px) {
+  .ag { max-width: 900px; margin-inline: auto; border-inline: 1px solid var(--line); background: #fff; }
+  .bd { border-inline: 0; }
+}
