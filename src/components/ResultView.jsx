@@ -33,10 +33,6 @@ export default function ResultView({ result, error, busy, onRetry, onRestart }) 
     <section className={`card result result--${outcome} view-in`}>
       <h2>{t.result[outcome]}</h2>
       <p>{t.result[`${outcome}Text`]}</p>
-      <p className="muted">
-        {t.result.status}: {result.status}
-        {t.result.statusNames[result.status] ? ` – ${t.result.statusNames[result.status]}` : ''}
-      </p>
       <div className="actions">
         <button className="btn" onClick={onRestart}>{t.result.again}</button>
       </div>
