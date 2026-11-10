@@ -38,10 +38,11 @@ export default async (request) => {
   if (request.method !== 'POST') return json(405, { error: 'Use POST.' });
 
   const { SAP_HOST, SAP_USER, SAP_PASSWORD, SAP_CLIENT, ACCESS_CODE } = process.env;
-  if (!SAP_HOST || !SAP_USER || !SAP_PASSWORD || !ACCESS_CODE) return json(500, { error: 'SAP connection is not configured.' });
+  if (!SAP_HOST || !SAP_USER || !SAP_PASSWORD) return json(500, { error: 'SAP connection is not configured.' });
 
-  // Public site: without the code nobody can trigger Schufa queries or create partners
-  if (request.headers.get('x-access-code') !== ACCESS_CODE) return json(401, { error: 'Wrong access code.' });
+  // Optional: if ACCESS_CODE is set, the site is protected (without the code nobody can trigger
+  // Schufa queries or create partners). If it is not set, the check is open to everyone.
+  if (ACCESS_CODE && request.headers.get('x-access-code') !== ACCESS_CODE) return json(401, { error: 'Wrong access code.' });
 
   const url = new URL('/sap/zesm_web_check', SAP_HOST);
   if (SAP_CLIENT) url.searchParams.set('sap-client', SAP_CLIENT);
