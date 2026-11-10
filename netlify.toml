@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Not secret: switches the app from mock data to the SAP backend.
+# SAP_HOST, SAP_USER, SAP_PASSWORD and SAP_CLIENT are set in the Netlify UI, not here.
+[build.environment]
+  VITE_USE_MOCK = "false"
+  NODE_VERSION = "22"

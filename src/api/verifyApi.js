@@ -41,14 +41,40 @@ async function mockVerify(partner) {
   return { status: '01', techStatus: '00' };
 }
 
+// The Netlify function (netlify/functions/sap-check.mjs) only answers with the right access code.
+// Asked once per browser session; the local Vite proxy never asks for it.
+const ACCESS_CODE_KEY = 'accessCode';
+
+function storedAccessCode() {
+  try {
+    return sessionStorage.getItem(ACCESS_CODE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function storeAccessCode(code) {
+  try {
+    sessionStorage.setItem(ACCESS_CODE_KEY, code);
+  } catch {
+    // no session storage (private mode): the code is asked again next time
+  }
+}
+
 // ICF handler ZCL_ESM_WEB_CHECK (abap/zcl_esm_web_check.clas.abap) wrapping /AESM/FM_CHECK_BP.
-async function sapVerify(partner) {
+async function sapVerify(partner, accessCode = storedAccessCode()) {
   const res = await fetch('/sap/zesm_web_check', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Access-Code': accessCode },
     body: JSON.stringify(partner),
   });
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    const code = window.prompt('Zugangscode / Access code');
+    if (!code) throw new Error(data.error ?? 'Access code required');
+    storeAccessCode(code);
+    return sapVerify(partner, code);
+  }
   if (!res.ok) throw new Error(data.error ?? `Backend returned ${res.status}`);
   return { status: data.status, techStatus: data.techStatus };
 }
