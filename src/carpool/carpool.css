@@ -533,3 +533,11 @@ button, select { font: inherit; }
 
 .select__trigger.wide { min-width: 150px; }
 .select__popup { min-width: 9rem; }
+
+/* phone person cards: "# 41" top left, trash icon top right */
+@media (max-width: 699px) {
+  .tbl tr { position: relative; }
+  .tbl td.c-num { justify-content: flex-start; gap: 8px; text-align: left; }
+  .tbl td.c-del { position: absolute; top: 6px; right: 8px; width: auto; padding: 0; display: block; }
+  .tbl td.c-del::before { content: none; }
+}

@@ -1385,7 +1385,7 @@ export default function CarpoolApp() {
                       const idx = persons.indexOf(p) + 1;
                       return (
                         <tr key={p.id} className={p.legs[leg] ? "" : "is-away"}>
-                          <td data-label="#">{idx}</td>
+                          <td className="c-num" data-label="#">{idx}</td>
                           <td data-label={t.name}>{p.name}</td>
                           <td data-label={t.team}>
                             <LangSelect
@@ -1447,9 +1447,9 @@ export default function CarpoolApp() {
                               <span className="assign"><span className="pill away">{t.notThere}</span></span>
                             )}
                           </td>
-                          <td data-label="">
+                          <td className="c-del" data-label="">
                             <button className="icon-btn" onClick={() => removePerson(p.id)} aria-label={`${t.remove}: ${p.name}`} title={t.remove}>
-                              <X size={16} aria-hidden />
+                              <Trash2 size={16} aria-hidden />
                             </button>
                           </td>
                         </tr>
