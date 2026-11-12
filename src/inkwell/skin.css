@@ -1,0 +1,83 @@
+/* Carpool look ("Inkwell": black frame, Montserrat Black + Inter, pastel tiles) as a SKIN over the unchanged live agenda.
+   Only colours, fonts and the frame change - markup, clock and the intro animation are the live ones.
+   Everything is scoped to the agenda page (.ag), the QR landing page is not touched. Same tokens as carpool.css. */
+body:has(.ag) { background: hsl(240 4% 96%); }
+
+.ag {
+  --bg: hsl(240 4% 96%); --surface: hsl(30 10% 97%); --surface-2: hsl(240 4% 93%);
+  --text: #000; --muted: hsl(0 0% 40%); --line: hsl(240 4% 90%); --year: #000;
+  --tile-blue: linear-gradient(135deg, #E6EFFB 0%, #B3CBEF 100%);
+  --grad-button: linear-gradient(135deg, #F5C6B0, #F4A5A0, #E8A0BF);
+  --bar-track: #d9dbe3;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #000;
+}
+.ag h2, .ag .bd-title, .ag .bd-time b { font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; }
+
+/* frame: one black-outlined rounded block, like the bento frame */
+.ag { max-width: 900px; margin: 20px auto; padding: 0; border: 2px solid #000; border-radius: 24px; overflow: hidden; background: hsl(30 10% 97%); }
+@media (max-width: 899px) { .ag { margin: 12px 14px; } }
+
+/* cover: exactly the original (alseda blue, white text, Rubik) - the carpool look starts below it.
+   The tokens are reset only inside the cover, so every original cover rule renders as before. */
+.ag-hero { --year: #002e6c; --line: #d3deef; --muted: #5b6f93; --text: #002e6c; font-family: "Rubik", system-ui, sans-serif; }
+/* language switch in the cover: original box (the black pill below is only for the QR page) */
+.ag-hero .lang { border: 1px solid #ffffff66; border-radius: 10px; padding: 0; overflow: hidden; }
+.ag-hero .lang button { border-radius: 0; font-weight: 500; transition: none; }
+
+/* band list: same structure and animation, carpool colours (black bar, pastel current row) */
+.bd { background: hsl(30 10% 97%); }
+.bd-row { --notch: var(--bar-track); background: hsl(30 10% 97%); border-bottom: 1px solid hsl(240 4% 90%); }
+.bd-row:last-of-type { border-bottom: 0; }
+.bd-row:nth-child(even) { background: hsl(240 4% 93%); }
+.bd-row.past, .bd-row.current { --notch: #000; }
+.bd-axis::before { background: linear-gradient(to bottom, #000 calc(var(--rp, 0) * 100%), var(--bar-track) calc(var(--rp, 0) * 100%)); }
+.bd-time b { font-weight: 900; letter-spacing: -.04em; color: #000; }
+.bd-time small { font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: hsl(0 0% 40%); }
+.bd-time small.bd-left { color: #000; }
+.bd-title { font-weight: 800; letter-spacing: -.02em; color: #000; }
+.bd-sub, .bd-meta { color: hsl(0 0% 40%); }
+.bd-map span { text-decoration-color: #00000040; }
+.bd-map:hover, .bd-map:focus-visible { color: #000; }
+.bd-row.break .bd-time b, .bd-row.break .bd-title { color: hsl(0 0% 40%); }
+.bd-row.past .bd-time b, .bd-row.past .bd-title { color: hsl(0 0% 55%); }
+.bd-row.past .bd-time small, .bd-row.past .bd-sub, .bd-row.past .bd-meta { color: hsl(0 0% 62%); }
+.bd-row.current { background: var(--tile-blue); animation: none; }
+.bd-row.current .bd-title { font-weight: 900; }
+.bd-row.break.current .bd-time b, .bd-row.break.current .bd-title { color: #000; }
+.bd-row.current .r-tag { color: #000; }
+.bd-row.current .r-tag::before { background: #E8445A; }
+.bd-now { border-color: #000; }
+.bd-now::after, .bd-dot::after { border-color: #E8445A; }
+.bd-dot { border-color: #000; }
+.bd-fill { background: #000; }
+
+/* footer: black rule above, carpool grey */
+.ag-footer { border-top: 2px solid #000; background: hsl(30 10% 97%); }
+
+/* ---------- QR page and splash: same skin (this file is only loaded by inkwell.html) ---------- */
+:root { --bg: hsl(240 4% 96%); --surface: hsl(30 10% 97%); --surface-2: hsl(240 4% 93%); --text: #000; --muted: hsl(0 0% 40%); --line: hsl(240 4% 90%); --year: #000; }
+body { background: hsl(240 4% 96%); color: #000; font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+/* language pill: black, as in the cover */
+.lang { background: #000; border: 0; border-radius: 999px; padding: 3px; overflow: visible; }
+.lang button { color: #fff; border-radius: 999px; font-weight: 600; transition: background .2s, color .2s; }
+.lang button[aria-pressed="true"] { background: #fff; color: #000; }
+
+/* QR page */
+.landing h1, .s-brand, .s-title { font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; }
+.landing .eyebrow { text-transform: none; letter-spacing: -.01em; font-size: clamp(1.1rem, 2.4vw, 1.5rem); font-weight: 800; color: #002e6c; } /* "alseda Consulting", bold, alseda blue */
+.landing h1 { font-weight: 900; letter-spacing: -.05em; line-height: .95; }
+.landing h1 span { color: #000; }
+.landing .date { color: #000; }
+.hint { color: hsl(0 0% 40%); }
+.qr { background: hsl(30 10% 97%); border: 2px solid #000; box-shadow: none; animation: ik-breathe 4.5s ease-in-out infinite; }
+@keyframes ik-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+@media (prefers-reduced-motion: reduce) { .qr { animation: none; } }
+.landing-footer { color: hsl(0 0% 25%); }
+
+/* splash */
+.splash { background: hsl(240 4% 96%); }
+.s-brand { font-weight: 900; letter-spacing: -.04em; color: #002e6c; } /* alseda blue */
+.s-title { font-weight: 600; color: hsl(0 0% 40%); }
+.s-title b { color: #000; font-weight: 800; }
