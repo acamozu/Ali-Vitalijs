@@ -16,10 +16,10 @@ const Check = () => (
 
 const NONE = "__none";
 
-export default function LangSelect({ value, onValueChange, options, placeholder = "–", clearLabel = "–", label, className = "" }) {
-  const items = [{ value: NONE, label: clearLabel }, ...options];
+export default function LangSelect({ value, onValueChange, options, placeholder = "–", clearLabel = "–", label, className = "", noClear = false, align = "start", disabled = false }) {
+  const items = noClear ? options : [{ value: NONE, label: clearLabel }, ...options];
   return (
-    <Select.Root items={items} value={value || null} modal={false} onValueChange={(next) => next != null && onValueChange(next === NONE ? "" : next)}>
+    <Select.Root disabled={disabled} items={items} value={value || null} modal={false} onValueChange={(next) => next != null && onValueChange(next === NONE ? "" : next)}>
       <Select.Trigger className={`select__trigger ${className}`} aria-label={label}>
         <Select.Value className="select__value" placeholder={placeholder} />
         <Select.Icon render={<ChevronDown />} />
@@ -28,7 +28,7 @@ export default function LangSelect({ value, onValueChange, options, placeholder 
         <Select.Positioner
           side="bottom"
           sideOffset={4}
-          align="start"
+          align={align}
           alignItemWithTrigger={false}
           collisionAvoidance={{ side: "none", align: "none" }}
           className="select__positioner"

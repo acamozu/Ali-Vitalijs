@@ -31,7 +31,7 @@ const LAST = ["Beispiel", "Muster", "Probe", "Demo", "Testmann"];
 const NAMES = LAST.flatMap((l) => FIRST.map((f) => `${f} ${l}`)); // 40 fictional names
 
 export function newPerson(name, extra = {}) {
-  return { id: `P${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name, car: false, seats: CAR_SEATS, legs: [true, true], team: "", lang: "", ...extra };
+  return { id: `P${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name, car: false, seats: CAR_SEATS, legs: [true, true], team: "", lang: "", note: "", ...extra };
 }
 
 // next free fictional name
@@ -56,6 +56,7 @@ export function defaultPersons() {
     legs: [true, true],
     team: TEAMS[(i * 3 + Math.floor(i / 5)) % TEAMS.length],
     lang: LANGS[(i * 7 + 3) % LANGS.length],
+    note: i === 4 ? "Rollstuhl" : i === 11 ? "Gepäck" : "",
   }));
 }
 
@@ -158,7 +159,7 @@ export function baseLayout(plan, limits = DEFAULT_LIMITS) {
     boxes[id] = pad(x.members.map((p) => p.id), limits.taxiSeats);
     order.taxis.push(id);
   });
-  return { boxes, order, buyers };
+  return { boxes, order, buyers, times: {} };
 }
 
 // every non-empty group needs a valid ticket buyer
@@ -217,6 +218,31 @@ export function applyCounts(l, target, limits) {
   return l;
 }
 
+// the layout of another leg as a start for leg `to`: same cars, groups and taxis; people who are not on `to` drop out
+// (the app fills their places again), drivers who are only on `to` get an empty car, departure times start again
+export function copyLayoutToLeg(src, persons, to) {
+  const byId = Object.fromEntries(persons.map((p) => [p.id, p]));
+  const boxes = {};
+  const order = { cars: [], groups: [...src.order.groups], taxis: [...src.order.taxis] };
+  src.order.cars.forEach((id) => {
+    const d = byId[src.boxes[id][0]];
+    if (d && d.car && d.legs[to]) {
+      boxes[id] = [...src.boxes[id]];
+      order.cars.push(id);
+    }
+  });
+  [...order.groups, ...order.taxis].forEach((id) => (boxes[id] = [...src.boxes[id]]));
+  const next = { boxes, order, buyers: { ...src.buyers }, times: {} };
+  persons
+    .filter((p) => p.car && p.legs[to] && !order.cars.some((id) => boxes[id][0] === p.id))
+    .forEach((p) => {
+      const id = newBoxId(next, "c");
+      boxes[id] = pad([p.id], p.seats);
+      order.cars.push(id);
+    });
+  return fixBuyers(next);
+}
+
 // bring a stored (manually edited) layout in line with the current roster and limits:
 // people who left are removed, new people take the first free place, sizes follow the limits
 export function reconcileLayout(layout, riderIds, limits, restBy) {
@@ -240,7 +266,8 @@ export function reconcileLayout(layout, riderIds, limits, restBy) {
   });
   // whoever lost a place by shrinking a group or taxi is placed again below
   const seen = new Set(Object.entries(boxes).flatMap(([id, l]) => l.filter((x, i) => x && !(id[0] === "c" && i === 0))));
-  const next = { boxes, order, buyers: { ...layout.buyers } };
+  const times = Object.fromEntries(Object.entries(layout.times || {}).filter(([id]) => id in boxes));
+  const next = { boxes, order, buyers: { ...layout.buyers }, times };
   const free = (kinds) => {
     for (const k of kinds)
       for (const id of order[k]) {
@@ -309,7 +336,7 @@ export function parseRoster(text) {
     const car = YES.test((r[1] || "").trim());
     const seats = Math.min(CAR_SEATS, Math.max(MIN_SEATS, parseInt(r[2], 10) || CAR_SEATS));
     const flag = (v) => !NO.test((v || "").trim());
-    out.push({ id: `I${String(i + 1).padStart(3, "0")}`, name, car, seats, legs: [flag(r[3]), flag(r[4])], team: (r[5] || "").trim(), lang: normLang(r[6]) });
+    out.push({ id: `I${String(i + 1).padStart(3, "0")}`, name, car, seats, legs: [flag(r[3]), flag(r[4])], team: (r[5] || "").trim(), lang: normLang(r[6]), note: (r[7] || "").trim() });
   });
   return out;
 }

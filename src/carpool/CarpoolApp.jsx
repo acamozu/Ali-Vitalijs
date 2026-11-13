@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { ArrowRight, Trash2, Pencil, LayoutList, ArrowUp, ArrowDown, GripVertical, Car, Train, Ticket, Check, Download, Upload, Plus, Minus, X, RotateCcw, Undo2, Redo2, Copy, Save, FolderOpen, TriangleAlert, Info, CircleCheck } from "lucide-react";
+import { ListChecks, CarTaxiFront, Users, MessageSquareText, Menu, ListPlus, ArrowRight, Trash2, Pencil, LayoutList, ArrowUp, ArrowDown, GripVertical, Car, Train, Ticket, Check, Download, Upload, Plus, Minus, X, RotateCcw, Undo2, Redo2, Copy, Save, FolderOpen, TriangleAlert, Info, CircleCheck } from "lucide-react";
 import { tagColors, NO_TAG } from "./tags.js";
 import LangSelect from "./LangSelect.jsx";
-import { computeChecks } from "./checks.js";
+import { computeChecks, newRule, cleanRules, ruleReady, RULE_TYPES } from "./checks.js";
 import { buildCards, cardText, copyText } from "./share.js";
 import { EVENT } from "../agenda.js";
 import photo from "../assets/photo-1.webp";
@@ -27,8 +27,8 @@ import {
   applyCounts,
   fixBuyers,
   newBoxId,
+  copyLayoutToLeg,
   parseRoster,
-  exportCsv,
 } from "./planner.js";
 
 const STORE = "carpool-v3";
@@ -43,9 +43,14 @@ const TEXT = {
     depart: "Abfahrt",
     oclock: "Uhr",
     navCars: "Autos",
-    navTram: "Tram",
+    navTram: "ÖPNV",
     navTaxi: "Taxi",
     navAll: "Personen",
+    navChecks: "Hinweise",
+    navCards: "Karten",
+    menu: "Menü",
+    plannerMenu: "Planer-Menü",
+    goTo: "Springe zu",
     persons: "Personen",
     away: "nicht dabei",
     byCar: "im Auto",
@@ -108,6 +113,25 @@ const TEXT = {
     darkH: (n) => `${n} Personen unterwegs`,
     rights: "Alle Rechte vorbehalten.",
     csvHead: ["Etappe", "Zeit", "Von", "Nach", "Name", "Transport", "Gruppe", "Rolle", "Team", "Sprache"],
+    xl: {
+      title: "Transfer-Plan Year-End Conference",
+      overview: "Übersicht",
+      people: "Personen",
+      level: "Stufe",
+      check: "Anwesenheit",
+      checkCol: "Anwesend",
+      messages: "Nachrichten",
+      costs: "Kosten",
+      ticketPrice: "Preis Gruppenticket (Beispielwert)",
+      taxiPrice: "Preis pro Taxifahrt (Beispielwert)",
+      adjust: "Beispielwerte – die gelben Felder anpassen, die Summen rechnen sich neu.",
+      tickets: "Gruppentickets",
+      rides: "Taxifahrten",
+      ticketCost: "Kosten Tickets",
+      taxiCost: "Kosten Taxi",
+      total: "Gesamt",
+      sum: "Summe",
+    },
     notThere: "nicht dabei",
     optionsLabel: "Planung",
     groupBy: "Zusammen reisen nach",
@@ -123,14 +147,55 @@ const TEXT = {
     planSaved: "Plan gespeichert",
     planBad: "Das ist keine gültige Plan-Datei.",
     planAsk: "Den gespeicherten Plan laden und die aktuelle Planung ersetzen?",
-    planHint: "Die Plan-Datei enthält Namen – vertraulich behandeln.",
+    planHint: "Die Plan-Datei enthält Namen – vertraulich behandeln. Laden: .json oder die exportierte Excel-Datei.",
     checksH: "Hinweise",
     checksSub: "Der Plan prüft sich selbst.",
     noIssues: "Alles in Ordnung – keine Hinweise.",
+    rulesH: "Eigene Regeln",
+    rulesSub: "Zusätzliche Bedingungen, die der Plan prüft. Sie werden mit dem Plan gespeichert.",
+    addRule: "+ Regel",
+    rulesBtn: "Regeln",
+    departAt: "Abfahrt",
+    exportFailed: "Der Export ist fehlgeschlagen.",
+    noRules: "Noch keine eigenen Regeln.",
+    ruleTypes: { pair: "Zwei Personen", lang: "Sprache pro Fahrzeug", teamMax: "Team-Grenze", person: "Personenregel", note: "Notiz-Regel" },
+    pairWith: "und",
+    pairTogether: "fahren zusammen",
+    pairApart: "fahren getrennt",
+    ruleLangA: "Jedes Fahrzeug braucht mindestens eine Person mit",
+    ruleTeamA: "Höchstens",
+    ruleTeamB: "Person(en) pro Fahrzeug aus",
+    allTeams: "jedem Team",
+    personNoTaxi: "nimmt kein Taxi",
+    personNoTram: "fährt nicht mit der Tram",
+    personInCar: "fährt im Auto",
+    personNotAlone: "fährt nicht allein",
+    noteCol: "Notiz",
+    keyword: "Stichwort",
+    noteRuleA: "Personen, deren Notiz enthält",
+    copyLeg2: "Etappe 2 = Etappe 1",
+    copyLegTip: "Etappe 2 aus Etappe 1 übernehmen (mit Rückgängig umkehrbar)",
+    legCopied: "Etappe 2 aus Etappe 1 übernommen",
+    pickPerson: "Person",
+    levelWarn: "Warnung",
+    levelInfo: "Hinweis",
+    levelToggle: "Warnung oder Hinweis",
+    ruleOn: "Regel aktiv",
+    ruleActive: "Aktiv",
+    ruleInactive: "Inaktiv",
+    ruleRemove: "Regel löschen",
     legWord: "Etappe",
     kinds: { car: "Auto", group: "Gruppe", taxi: "Taxi", team: "Team", lang: "Sprache" },
     chk: {
       noPeople: () => "Niemand ist bei dieser Etappe dabei.",
+      rule: (a) =>
+        ({
+          pair: a.mode === "together" ? `${a.a} und ${a.b} sollen zusammen fahren, sitzen aber getrennt.` : `${a.a} und ${a.b} sollen getrennt fahren, sitzen aber im selben Fahrzeug.`,
+          lang: `${a.bad} von ${a.total} Fahrzeugen und Gruppen haben niemanden mit ${a.lang}.`,
+          teamMax: `${a.bad} Fahrzeuge oder Gruppen haben mehr als ${a.max} ${a.max === 1 ? "Person" : "Personen"} ${a.team === "*" ? "desselben Teams" : `aus Team ${a.team}`}.`,
+          note: `Notiz „${a.keyword}“ (${a.names}): ${{"noTaxi":"sollen kein Taxi nehmen","noTram":"sollen nicht mit der Tram fahren","inCar":"sollen im Auto fahren","notAlone":"sollen nicht allein fahren"}[a.rule]}.`,
+          person: { noTaxi: `${a.name} soll kein Taxi nehmen.`, noTram: `${a.name} soll nicht mit der Tram fahren.`, inCar: `${a.name} soll im Auto fahren.`, notAlone: `${a.name} fährt allein im Fahrzeug.` }[a.rule],
+        })[a.type],
       emptyCar: ({ n }) => `Auto ${n} fährt nur mit Fahrer:in, während andere Tram oder Taxi nehmen.`,
       freeSeats: ({ free, others }) => `${free} freie Autoplätze, obwohl ${others} Personen mit Tram oder Taxi fahren.`,
       smallGroup: ({ n, size }) => `Gruppe ${n} hat nur ${size} ${size === 1 ? "Person" : "Personen"} – ein Taxi ist evtl. günstiger.`,
@@ -181,9 +246,14 @@ const TEXT = {
     depart: "Departure",
     oclock: "",
     navCars: "Cars",
-    navTram: "Tram",
+    navTram: "Transit",
     navTaxi: "Taxi",
     navAll: "People",
+    navChecks: "Checks",
+    navCards: "Cards",
+    menu: "Menu",
+    plannerMenu: "Planner Menu",
+    goTo: "Jump to",
     persons: "People",
     away: "not joining",
     byCar: "by car",
@@ -246,6 +316,25 @@ const TEXT = {
     darkH: (n) => `${n} people on the move`,
     rights: "All rights reserved.",
     csvHead: ["Leg", "Time", "From", "To", "Name", "Transport", "Group", "Role", "Team", "Language"],
+    xl: {
+      title: "Transfer plan Year-End Conference",
+      overview: "Overview",
+      people: "People",
+      level: "Level",
+      check: "Check-in",
+      checkCol: "Present",
+      messages: "Messages",
+      costs: "Costs",
+      ticketPrice: "Group ticket price (example value)",
+      taxiPrice: "Price per taxi ride (example value)",
+      adjust: "Example values – adjust the yellow cells, the sums recalculate.",
+      tickets: "Group tickets",
+      rides: "Taxi rides",
+      ticketCost: "Ticket costs",
+      taxiCost: "Taxi costs",
+      total: "Total",
+      sum: "Sum",
+    },
     notThere: "not joining",
     optionsLabel: "Planning",
     groupBy: "Keep together by",
@@ -261,14 +350,55 @@ const TEXT = {
     planSaved: "Plan saved",
     planBad: "This is not a valid plan file.",
     planAsk: "Load the saved plan and replace the current planning?",
-    planHint: "The plan file contains names – handle it confidentially.",
+    planHint: "The plan file contains names – handle it confidentially. Load: .json or the exported Excel file.",
     checksH: "Checks",
     checksSub: "The plan checks itself.",
     noIssues: "All good – nothing to flag.",
+    rulesH: "Your own rules",
+    rulesSub: "Extra conditions the plan checks. They are saved with the plan.",
+    addRule: "+ Rule",
+    rulesBtn: "Rules",
+    departAt: "Departure",
+    exportFailed: "The export failed.",
+    noRules: "No own rules yet.",
+    ruleTypes: { pair: "Two people", lang: "Language per vehicle", teamMax: "Team limit", person: "Person rule", note: "Note rule" },
+    pairWith: "and",
+    pairTogether: "travel together",
+    pairApart: "travel apart",
+    ruleLangA: "Every vehicle needs at least one person with",
+    ruleTeamA: "At most",
+    ruleTeamB: "person(s) per vehicle from",
+    allTeams: "any team",
+    personNoTaxi: "does not take a taxi",
+    personNoTram: "does not take the tram",
+    personInCar: "travels by car",
+    personNotAlone: "does not travel alone",
+    noteCol: "Note",
+    keyword: "Keyword",
+    noteRuleA: "People whose note contains",
+    copyLeg2: "Leg 2 = Leg 1",
+    copyLegTip: "Start leg 2 from leg 1 (can be undone)",
+    legCopied: "Leg 2 taken over from leg 1",
+    pickPerson: "Person",
+    levelWarn: "Warning",
+    levelInfo: "Info",
+    levelToggle: "Warning or info",
+    ruleOn: "Rule active",
+    ruleActive: "Active",
+    ruleInactive: "Inactive",
+    ruleRemove: "Delete rule",
     legWord: "Leg",
     kinds: { car: "Car", group: "Group", taxi: "Taxi", team: "team", lang: "language" },
     chk: {
       noPeople: () => "Nobody is joining this leg.",
+      rule: (a) =>
+        ({
+          pair: a.mode === "together" ? `${a.a} and ${a.b} should travel together but are apart.` : `${a.a} and ${a.b} should travel apart but share a vehicle.`,
+          lang: `${a.bad} of ${a.total} cars and groups have nobody with ${a.lang}.`,
+          teamMax: `${a.bad} cars or groups have more than ${a.max} ${a.max === 1 ? "person" : "people"} ${a.team === "*" ? "of the same team" : `from team ${a.team}`}.`,
+          note: `Note “${a.keyword}” (${a.names}): ${{"noTaxi":"should not take a taxi","noTram":"should not take the tram","inCar":"should travel by car","notAlone":"should not travel alone"}[a.rule]}.`,
+          person: { noTaxi: `${a.name} should not take a taxi.`, noTram: `${a.name} should not take the tram.`, inCar: `${a.name} should travel by car.`, notAlone: `${a.name} travels alone in a vehicle.` }[a.rule],
+        })[a.type],
       emptyCar: ({ n }) => `Car ${n} carries only its driver while others take tram or taxi.`,
       freeSeats: ({ free, others }) => `${free} free car seats while ${others} people go by tram or taxi.`,
       smallGroup: ({ n, size }) => `Group ${n} has only ${size} ${size === 1 ? "person" : "people"} – a taxi may be cheaper.`,
@@ -416,10 +546,24 @@ function useSeatDrag(onSwap) {
 
 // team / language colour of a person (only while a grouping is chosen)
 const TagCtx = createContext({ by: "none", of: () => "", color: () => NO_TAG, title: () => "" });
-function TagDot({ p, className = "tag-dot" }) {
+// the language of a person (DE / EN / RU) written top right of the seat, no colour dots
+function TagDot({ p, className = "lang-tag" }) {
   const tg = useContext(TagCtx);
-  if (tg.by === "none" || !tg.of(p)) return null; // no grouping chosen, or this person has no team / language
-  return <span className={className} style={{ background: tg.color(tg.of(p)) }} title={tg.title(p)} />;
+  if (!p.lang) return null;
+  return (
+    <span className={className} title={tg.title(p)}>
+      {p.lang}
+    </span>
+  );
+}
+
+// a small "i" for people with a note (Rollstuhl, Gepäck, ...): the note shows on hover
+function NoteFlag({ note, inline }) {
+  return (
+    <span className={`note-flag${inline ? " inline" : ""}`} title={note} aria-label={note}>
+      <Info size="100%" aria-hidden />
+    </span>
+  );
 }
 
 function Seat({ p, idx, carId, dnd, pick, t }) {
@@ -463,6 +607,7 @@ function Seat({ p, idx, carId, dnd, pick, t }) {
           })}
     >
       <TagDot p={p} />
+      {p.note ? <NoteFlag note={p.note} /> : null}
       {driver ? <span className="seat-role">{t.driver}</span> : null}
       <span className="seat-name">
         {p.name.split(" ").map((w, i) => (
@@ -561,8 +706,9 @@ function Slot({ p, idx, boxId, kind, dnd, pick, t, buyer, onBuyer }) {
       <span className={`dot ${kind === "taxi" ? "car" : "train"}`}>
         <Icon size={15} aria-hidden />
       </span>
-      <TagDot p={p} className="tag-dot inline" />
       <span className="pp-name">{p.name}</span>
+      <TagDot p={p} className="lang-tag inline" />
+      {p.note ? <NoteFlag note={p.note} inline /> : null}
       {kind === "tram" ? (
         <button
           className={`buy${buyer ? " on" : ""}`}
@@ -645,6 +791,168 @@ function MoveBar({ label, first, last, onUp, onDown, t }) {
   );
 }
 
+// departure time of one vehicle, always 24 h ("14:50"; the native time field would follow the browser's 12 h setting).
+// Type digits: "1450", "930" or "9" -> 14:50, 09:30, 09:00. Empty = back to the time of the leg. Grey while it is the time of the leg.
+function DepartTime({ value, base, label, onChange }) {
+  const [draft, setDraft] = useState(null);
+  const commit = (raw) => {
+    const d = raw.replace(/\D/g, "");
+    setDraft(null);
+    if (!d) return onChange("");
+    const hh = d.length <= 2 ? +d : d.length === 3 ? +d[0] : +d.slice(0, 2);
+    const mm = d.length <= 2 ? 0 : +d.slice(d.length === 3 ? 1 : 2);
+    if (hh < 24 && mm < 60) onChange(`${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`);
+  };
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      maxLength={5}
+      placeholder="HH:MM"
+      className={`time-input${draft === null && value === base ? " base" : ""}`}
+      value={draft ?? value}
+      aria-label={label}
+      title={`${label} (24 h)`}
+      onFocus={(e) => e.target.select()}
+      onChange={(e) => {
+        const d = e.target.value.replace(/\D/g, "").slice(0, 4);
+        setDraft(d.length > 2 ? `${d.slice(0, 2)}:${d.slice(2)}` : d);
+      }}
+      onBlur={(e) => commit(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+        if (e.key === "Escape") {
+          setDraft(null);
+          e.currentTarget.blur();
+        }
+      }}
+    />
+  );
+}
+
+// one custom rule: on/off, its sentence made of dropdowns, warning or info, delete
+function RuleRow({ rule, persons, teams, t, onChange, onRemove }) {
+  const set = (patch) => onChange({ ...rule, ...patch });
+  const people = [...persons].sort((x, y) => x.name.localeCompare(y.name)).map((p) => ({ value: p.id, label: p.name }));
+  return (
+    <li className={`rule-row${rule.on ? "" : " off"}`}>
+      <button
+        className={`switch${rule.on ? " on" : ""}`}
+        role="switch"
+        aria-checked={rule.on}
+        aria-label={t.ruleOn}
+        title={t.ruleOn}
+        onClick={() => set({ on: !rule.on })}
+      >
+        <i className="track">
+          <span />
+        </i>
+        <b>{rule.on ? t.ruleActive : t.ruleInactive}</b>
+      </button>
+      <div className="rule-body">
+        {rule.type === "pair" ? (
+          <>
+            <LangSelect disabled={!rule.on} noClear className="wide" value={rule.a} options={people.filter((o) => o.value !== rule.b)} placeholder={t.pickPerson} label={t.pickPerson} onValueChange={(v) => set({ a: v })} />
+            <span>{t.pairWith}</span>
+            <LangSelect disabled={!rule.on} noClear className="wide" value={rule.b} options={people.filter((o) => o.value !== rule.a)} placeholder={t.pickPerson} label={t.pickPerson} onValueChange={(v) => set({ b: v })} />
+            <LangSelect disabled={!rule.on}
+              noClear
+              className="wide"
+              value={rule.mode}
+              options={[
+                { value: "together", label: t.pairTogether },
+                { value: "apart", label: t.pairApart },
+              ]}
+              onValueChange={(v) => set({ mode: v })}
+            />
+          </>
+        ) : null}
+        {rule.type === "lang" ? (
+          <>
+            <span>{t.ruleLangA}</span>
+            <LangSelect disabled={!rule.on} noClear value={rule.lang} options={LANG_OPTIONS.map((l) => ({ value: l, label: l }))} label={t.langCol} onValueChange={(v) => set({ lang: v })} />
+          </>
+        ) : null}
+        {rule.type === "teamMax" ? (
+          <>
+            <span>{t.ruleTeamA}</span>
+            <LangSelect disabled={!rule.on} noClear value={String(rule.max)} options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: String(n) }))} label="max" onValueChange={(v) => set({ max: Number(v) })} />
+            <span>{t.ruleTeamB}</span>
+            <LangSelect disabled={!rule.on}
+              noClear
+              className="wide"
+              value={rule.team}
+              options={[{ value: "*", label: t.allTeams }, ...teams.map((x) => ({ value: x, label: x }))]}
+              label={t.team}
+              onValueChange={(v) => set({ team: v })}
+            />
+          </>
+        ) : null}
+        {rule.type === "note" ? (
+          <>
+            <span>{t.noteRuleA}</span>
+            <input
+              key={rule.id + rule.keyword}
+              className="cell-input keyword"
+              defaultValue={rule.keyword}
+              maxLength={30}
+              placeholder={t.keyword}
+              aria-label={t.keyword}
+              disabled={!rule.on}
+              onBlur={(e) => e.target.value.trim() !== rule.keyword && set({ keyword: e.target.value.trim() })}
+              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            />
+            <LangSelect
+              disabled={!rule.on}
+              noClear
+              className="wide"
+              value={rule.rule}
+              options={[
+                { value: "noTaxi", label: t.personNoTaxi },
+                { value: "noTram", label: t.personNoTram },
+                { value: "inCar", label: t.personInCar },
+                { value: "notAlone", label: t.personNotAlone },
+              ]}
+              onValueChange={(v) => set({ rule: v })}
+            />
+          </>
+        ) : null}
+        {rule.type === "person" ? (
+          <>
+            <LangSelect disabled={!rule.on} noClear className="wide" value={rule.p} options={people} placeholder={t.pickPerson} label={t.pickPerson} onValueChange={(v) => set({ p: v })} />
+            <LangSelect disabled={!rule.on}
+              noClear
+              className="wide"
+              value={rule.rule}
+              options={[
+                { value: "noTaxi", label: t.personNoTaxi },
+                { value: "noTram", label: t.personNoTram },
+                { value: "inCar", label: t.personInCar },
+                { value: "notAlone", label: t.personNotAlone },
+              ]}
+              onValueChange={(v) => set({ rule: v })}
+            />
+          </>
+        ) : null}
+      </div>
+      <div className="rule-end">
+        <button
+          className={`lvl ${rule.level}`}
+          disabled={!rule.on}
+          onClick={() => set({ level: rule.level === "warn" ? "info" : "warn" })}
+          title={`${rule.level === "warn" ? t.levelWarn : t.levelInfo} – ${t.levelToggle}`}
+          aria-label={`${rule.level === "warn" ? t.levelWarn : t.levelInfo} – ${t.levelToggle}`}
+        >
+          {rule.level === "warn" ? <TriangleAlert size={16} aria-hidden /> : <Info size={16} aria-hidden />}
+        </button>
+        <button className="icon-btn" onClick={onRemove} aria-label={t.ruleRemove} title={t.ruleRemove}>
+          <Trash2 size={16} aria-hidden />
+        </button>
+      </div>
+    </li>
+  );
+}
+
 // everything that is saved and can be undone lives in one document
 // an older saved test list (4 teams) gets the current test teams; lists with own teams are left alone
 function refreshTestTeams(persons) {
@@ -657,7 +965,7 @@ function refreshTestTeams(persons) {
 }
 
 const initialDoc = (saved) => ({
-  persons: refreshTestTeams((saved?.persons || defaultPersons()).map((p) => ({ team: "", ...p, lang: normLang(p.lang) }))),
+  persons: refreshTestTeams((saved?.persons || defaultPersons()).map((p) => ({ team: "", note: "", ...p, lang: normLang(p.lang) }))),
   restBy: saved?.restBy === "taxi" ? "taxi" : "tram",
   groupBy: ["team", "lang"].includes(saved?.groupBy) ? saved.groupBy : "none",
   limits: {
@@ -665,6 +973,7 @@ const initialDoc = (saved) => ({
     taxiSeats: clampLimit(saved?.limits?.taxiSeats, DEFAULT_LIMITS.taxiSeats, TAXI_RANGE),
   },
   edits: saved?.edits || {}, // { [leg]: { key, layout } }
+  rules: cleanRules(saved?.rules), // custom checks, saved with the plan
 });
 
 function docReducer(state, a) {
@@ -687,7 +996,7 @@ export default function CarpoolApp() {
   const t = TEXT[lang];
   const saved = useMemo(loadState, []);
   const [hist, dispatch] = useReducer(docReducer, null, () => ({ doc: initialDoc(saved), past: [], future: [] }));
-  const { persons, restBy, groupBy, limits, edits } = hist.doc;
+  const { persons, restBy, groupBy, limits, edits, rules } = hist.doc;
   const setField = (key) => (v) =>
     dispatch({ type: "set", fn: (d) => { const nv = typeof v === "function" ? v(d[key]) : v; return nv === d[key] ? d : { ...d, [key]: nv }; } });
   const setPersons = setField("persons");
@@ -695,6 +1004,7 @@ export default function CarpoolApp() {
   const setGroupBy = setField("groupBy");
   const setLimits = setField("limits");
   const setEdits = setField("edits");
+  const setRules = setField("rules");
   const setDoc = (patch) => dispatch({ type: "set", fn: (d) => ({ ...d, ...patch }) });
   const [leg, setLeg] = useState(saved?.leg === 1 ? 1 : 0);
   const [filter, setFilter] = useState("all");
@@ -706,8 +1016,75 @@ export default function CarpoolApp() {
   const planRef = useRef(null);
   const [layoutState, setLayoutState] = useState(loadLayouts); // { variants, activeId, order }
   const [layoutEdit, setLayoutEdit] = useState(false); // show the move bars
+  const [rulesOpen, setRulesOpen] = useState(false); // popup with the custom rules
   const [renaming, setRenaming] = useState(null); // id of the variant whose name is being edited in the bar
+  const [drawerOpen, setDrawerOpen] = useState(false); // side menu on tablet / phone
+  const [drawerClosing, setDrawerClosing] = useState(false); // true while it slides out
+  const drawerTimer = useRef(0);
+  const closeDrawerRef = useRef(() => {});
+  const DRAWER_MS = 320;
+  const openDrawer = () => {
+    clearTimeout(drawerTimer.current);
+    setDrawerClosing(false);
+    setDrawerOpen(true);
+  };
+  // slides out first, removes the menu afterwards; `after` runs once it is gone
+  const closeDrawer = (after) => {
+    if (drawerClosing) return;
+    setDrawerClosing(true);
+    drawerTimer.current = setTimeout(() => {
+      setDrawerOpen(false);
+      setDrawerClosing(false);
+      if (typeof after === "function") after();
+    }, DRAWER_MS);
+  };
+  closeDrawerRef.current = closeDrawer;
+  const [scrolled, setScrolled] = useState(false); // navbar gets a shadow once the page is scrolled
+  const [activeSec, setActiveSec] = useState(""); // section that is in view (highlighted in the menus)
   const [layoutPast, setLayoutPast] = useState([]); // earlier orders of this editing session (for the undo button)
+  // while the popup is open the page behind it does not scroll (the popup itself does)
+  useEffect(() => {
+    if (!rulesOpen && !drawerOpen) return;
+    const html = document.documentElement;
+    const prev = [html.style.overflow, document.body.style.overflow];
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    const esc = (e) => {
+      if (e.key !== "Escape") return;
+      setRulesOpen(false);
+      closeDrawerRef.current();
+    };
+    window.addEventListener("keydown", esc);
+    return () => {
+      html.style.overflow = prev[0];
+      document.body.style.overflow = prev[1];
+      window.removeEventListener("keydown", esc);
+    };
+  }, [rulesOpen, drawerOpen]);
+  // shadow under the navbar and the section that is currently in view
+  useEffect(() => {
+    const ids = ["checks", "cars", "tram", "taxi", "all", "cards"];
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      setScrolled(window.scrollY > 8);
+      let cur = "";
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 140) cur = id;
+      });
+      setActiveSec(cur);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
   useEffect(() => {
     try {
       localStorage.setItem(LAYOUT_STORE, JSON.stringify(layoutState));
@@ -760,6 +1137,7 @@ export default function CarpoolApp() {
   );
   const { key: planKey, layout, away } = layouts[leg];
   const { boxes, order, buyers } = layout;
+  const times = layout.times || {};
   const L = LEGS[leg];
   const from = L.from.name[lang];
   const to = L.to.name[lang];
@@ -787,6 +1165,7 @@ export default function CarpoolApp() {
       boxes: Object.fromEntries(Object.entries(boxes).map(([k, v]) => [k, [...v]])),
       order: { cars: [...order.cars], groups: [...order.groups], taxis: [...order.taxis] },
       buyers: { ...buyers },
+      times: { ...times },
     };
     setEdits((prev) => ({ ...prev, [leg]: { key: planKey, layout: fixBuyers(fn(copy) || copy) } }));
   };
@@ -799,6 +1178,17 @@ export default function CarpoolApp() {
       l.boxes[a.car][a.idx] = l.boxes[b.car][b.idx];
       l.boxes[b.car][b.idx] = tmp;
     });
+  };
+  const setTime = (id, value) =>
+    editLayout((l) => {
+      if (!value || value === L.time) delete l.times[id];
+      else l.times[id] = value;
+    });
+  // leg 2 starts from the cars, groups and taxis of leg 1 (can be undone)
+  const copyLeg = () => {
+    setEdits((prev) => ({ ...prev, 1: { key: structKeyOf(persons, 1, restBy, groupBy), layout: copyLayoutToLeg(layouts[0].layout, persons, 1) } }));
+    if (leg !== 1) setLeg(1);
+    setNote(t.legCopied);
   };
   const setBuyer = (gid, pid) => editLayout((l) => void (l.buyers[gid] = pid));
   const addBox = (kind) =>
@@ -887,14 +1277,15 @@ export default function CarpoolApp() {
       const list = parseRoster(String(r.result));
       if (!list.length) return window.alert(t.csvEmpty);
       if (window.confirm(t.replaceAsk(list.length))) {
-        setDoc({ persons: list, edits: {} });
+        // rules about named people no longer fit a new list
+        setDoc({ persons: list, edits: {}, rules: rules.filter((r) => r.type !== "pair" && r.type !== "person") });
       }
     };
     r.readAsText(f, "utf-8");
   };
   const resetData = () => {
     if (!window.confirm(t.resetAsk)) return;
-    setDoc({ persons: defaultPersons(), edits: {}, limits: DEFAULT_LIMITS, restBy: "tram", groupBy: "none" });
+    setDoc({ persons: defaultPersons(), edits: {}, limits: DEFAULT_LIMITS, restBy: "tram", groupBy: "none", rules: [] });
   };
 
   // every placed person of a layout, in plan order, with label and role (assignment table + export)
@@ -917,10 +1308,16 @@ export default function CarpoolApp() {
     entriesOf(layout).forEach((e) => c[e.kind]++);
     return c;
   }, [layout, t]);
-  const checks = useMemo(() => computeChecks({ persons, layouts, groupBy, limits }), [persons, layouts, groupBy, limits]);
+  const checks = useMemo(() => computeChecks({ persons, layouts, groupBy, limits, rules }), [persons, layouts, groupBy, limits, rules]);
+  const addRule = (type) => setRules((rs) => [...rs, newRule(type)]);
+  const changeRule = (r) => setRules((rs) => rs.map((x) => (x.id === r.id ? r : x)));
+  const removeRule = (id) => setRules((rs) => rs.filter((x) => x.id !== id));
+  const teamList = [...new Set(persons.map((p) => p.team).filter(Boolean))].sort((x, y) => x.localeCompare(y));
   const CHECK_TARGET = { noPeople: "all", carNotThere: "all", emptyCar: "cars", freeSeats: "cars", mixed: "cars", smallGroup: "tram", lonelyTaxi: "taxi" };
   const goToCheck = (c) => {
-    const target = c.code === "emptyBox" ? (c.args.kind === "group" ? "tram" : "taxi") : CHECK_TARGET[c.code] || "all";
+    const kindTarget = { car: "cars", group: "tram", taxi: "taxi" };
+    const ruleTarget = c.args.type === "person" || c.args.type === "note" ? (c.args.rule === "noTaxi" ? "taxi" : c.args.rule === "noTram" ? "tram" : c.args.rule === "notAlone" ? kindTarget[c.args.kind] || "cars" : "cars") : "cars";
+    const target = c.code === "emptyBox" ? (c.args.kind === "group" ? "tram" : "taxi") : c.code === "rule" ? ruleTarget : CHECK_TARGET[c.code] || "all";
     if (c.leg !== leg) setLeg(c.leg);
     // wait one tick so the other leg is rendered before scrolling
     setTimeout(() => {
@@ -951,6 +1348,20 @@ export default function CarpoolApp() {
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f) return;
+    if (/\.xlsx$/i.test(f.name)) {
+      (async () => {
+        try {
+          const { readPlanFromExcel } = await import("./excelImport.js");
+          const res = await readPlanFromExcel(f, { legs: LEGS, limits, keyOf: (ps, l) => structKeyOf(ps, l, restBy, groupBy) });
+          // rules about named people no longer fit the new list
+          if (window.confirm(t.planAsk)) setDoc({ persons: res.persons, edits: res.edits, rules: rules.filter((r) => r.type !== "pair" && r.type !== "person") });
+        } catch (err) {
+          console.error(err);
+          window.alert(t.planBad);
+        }
+      })();
+      return;
+    }
     const r = new FileReader();
     r.onload = () => {
       try {
@@ -992,24 +1403,24 @@ export default function CarpoolApp() {
   };
   const tickets = order.groups.filter((id) => filled(id) > 0).length;
 
-  // plan of both legs as a CSV (Excel opens it directly)
-  const exportPlan = () => {
-    const rows = [t.csvHead];
-    LEGS.forEach((lg, l) => {
-      const head = [l + 1, lg.time, lg.from.name[lang], lg.to.name[lang]];
-      entriesOf(layouts[l].layout).forEach((e) =>
-        rows.push([...head, byId[e.pid].name, e.kind === "tram" ? "Tram" : e.kind === "car" ? t.car : t.taxi, e.label, e.role, byId[e.pid].team, byId[e.pid].lang])
-      );
-      persons.filter((p) => !p.legs[l]).forEach((p) => rows.push([...head, p.name, t.notThere, "", "", p.team, p.lang]));
-    });
-    const url = URL.createObjectURL(new Blob([exportCsv(rows)], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `transfer-plan-${EVENT.date}.csv`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // the plan as an Excel workbook (overview, one sheet per leg, people with filters, hints)
+  const exportPlan = async () => {
+    try {
+      const { buildWorkbook } = await import("./excel.js");
+      const blob = await buildWorkbook({ persons, layouts, legs: LEGS, lang, t, checks, date: eventDateShort });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `transfer-plan-${EVENT.date}.xlsx`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      console.error(e);
+      window.alert(t.exportFailed);
+    }
   };
 
+  const eventDateShort = new Date(EVENT.date + "T12:00:00").toLocaleDateString(lang === "de" ? "de-DE" : "en-GB");
   const eventDate = new Date(EVENT.date + "T12:00:00").toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
   const onLeg = persons.length - away;
   const rows = persons.filter((p) => {
@@ -1071,6 +1482,16 @@ export default function CarpoolApp() {
     if (!activeVariant) return;
     setLayoutState((s) => ({ ...s, variants: s.variants.filter((v) => v.id !== s.activeId), activeId: null }));
   };
+
+  const SECTIONS = {
+    checks: { id: "checks", icon: ListChecks, label: t.checksH, nav: t.navChecks, count: checks.length },
+    cars: { id: "cars", icon: Car, label: t.carsH, nav: t.navCars, count: count.car },
+    tram: { id: "tram", icon: Train, label: t.tramH, nav: t.navTram, count: count.tram },
+    taxi: { id: "taxi", icon: CarTaxiFront, label: t.taxiH, nav: t.navTaxi, count: count.taxi },
+    people: { id: "all", icon: Users, label: t.allH, nav: t.navAll, count: persons.length },
+    cards: { id: "cards", icon: MessageSquareText, label: t.cardsH, nav: t.navCards, count: legCards[leg].cards.length },
+  };
+  const sectionLinks = sectionOrder.map((k) => SECTIONS[k]).filter(Boolean);
 
   const blocks = {
     leg: (
@@ -1138,8 +1559,11 @@ export default function CarpoolApp() {
                   <button className="ghost" onClick={() => planRef.current?.click()} title={t.planHint}>
                     <FolderOpen size={15} aria-hidden /> {t.loadPlan}
                   </button>
+                  <button className="ghost" onClick={copyLeg} title={t.copyLegTip}>
+                    <Copy size={15} aria-hidden /> {t.copyLeg2}
+                  </button>
                 </div>
-                <input ref={planRef} type="file" accept=".json,application/json" onChange={loadPlan} hidden />
+                <input ref={planRef} type="file" accept=".json,application/json,.xlsx" onChange={loadPlan} hidden />
               </div>
             </div>
     ),
@@ -1165,7 +1589,12 @@ export default function CarpoolApp() {
             <Reveal id="checks" className="tile">
               <div className="checks-head">
                 <h2 className="tile-title">{t.checksH}</h2>
-                {warns ? <span className="warn-badge">{warns}</span> : null}
+                {/* every hint is counted, warnings and infos alike; peach while there is a warning */}
+                <span className={`warn-badge${warns ? "" : " calm"}`}>{checks.length}</span>
+                <button className="ghost rules-open" onClick={() => setRulesOpen(true)} aria-haspopup="dialog">
+                  <ListPlus size={15} aria-hidden /> {t.rulesBtn}
+                  {rules.some(ruleReady) ? ` (${rules.filter(ruleReady).length})` : ""}
+                </button>
               </div>
               <p className="tile-note">{t.checksSub}</p>
               {checks.length ? (
@@ -1200,18 +1629,8 @@ export default function CarpoolApp() {
     ),
     cars: (
             <Reveal id="cars" className="tile">
-              <h2 className="tile-title">{t.carsH}</h2>
+              <h2 className="tile-title">{t.carsH} ({count.car})</h2>
               <p className="tile-note">{t.carsSub}</p>
-              {groupBy !== "none" && tagInfo.values.length ? (
-                <div className="legend">
-                  {tagInfo.values.map((v) => (
-                    <span key={v}>
-                      <i style={{ background: tagInfo.color(v) }} />
-                      {v}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
               {order.cars.length ? (
                 <>
                   <p className="tile-note drag-hint">{t.moveHint}</p>
@@ -1220,6 +1639,7 @@ export default function CarpoolApp() {
                       <article key={id} className="pcard">
                         <div className="pcard-head">
                           <h3>{t.car} {n + 1}</h3>
+                          <DepartTime value={times[id] || L.time} base={L.time} label={t.departAt} onChange={(v) => setTime(id, v)} />
                           <span className="pcard-fill">{filled(id)}/{boxes[id].length}</span>
                         </div>
                         <CarMap carId={id} slots={boxes[id].map((pid) => (pid ? byId[pid] : null))} dnd={dnd} pick={pick} t={t} />
@@ -1234,7 +1654,7 @@ export default function CarpoolApp() {
     ),
     tram: (
             <Reveal id="tram" className="tile">
-              <h2 className="tile-title">{t.tramH}</h2>
+              <h2 className="tile-title">{t.tramH} ({count.tram})</h2>
               <p className="tile-note">{t.tramSub(from)}</p>
               <div className="box-tools">
                 <Stepper label={t.groupCount} value={order.groups.length} min={groupPeople ? Math.ceil(groupPeople / limits.groupMax) : 0} max={groupPeople ? groupPeople : LIMIT_RANGE[1]} onChange={setGroupCount} />
@@ -1247,6 +1667,7 @@ export default function CarpoolApp() {
                     <article key={id} className="pcard">
                       <div className="pcard-head">
                         <h3>{t.group} {n + 1}</h3>
+                        <DepartTime value={times[id] || L.time} base={L.time} label={t.departAt} onChange={(v) => setTime(id, v)} />
                         <span className="pcard-fill">{filled(id)}/{boxes[id].length}</span>
                         {filled(id) === 0 ? (
                           <button className="icon-btn" onClick={() => removeBox("groups", id)} aria-label={t.removeBox} title={t.removeBox}>
@@ -1280,7 +1701,7 @@ export default function CarpoolApp() {
     ),
     taxi: (
             <Reveal id="taxi" className="tile">
-              <h2 className="tile-title">{t.taxiH}</h2>
+              <h2 className="tile-title">{t.taxiH} ({count.taxi})</h2>
               <p className="tile-note">{t.taxiSub}</p>
               <div className="box-tools">
                 <Stepper label={t.taxiSize} value={limits.taxiSeats} min={TAXI_RANGE[0]} max={TAXI_RANGE[1]} onChange={(v) => setLimits((l) => ({ ...l, taxiSeats: v }))} />
@@ -1294,6 +1715,7 @@ export default function CarpoolApp() {
                     <article key={id} className="pcard">
                       <div className="pcard-head">
                         <h3>{t.taxi} {n + 1}</h3>
+                        <DepartTime value={times[id] || L.time} base={L.time} label={t.departAt} onChange={(v) => setTime(id, v)} />
                         <span className="pcard-fill">{filled(id)}/{boxes[id].length}</span>
                         {filled(id) === 0 ? (
                           <button className="icon-btn" onClick={() => removeBox("taxis", id)} aria-label={t.removeBox} title={t.removeBox}>
@@ -1371,6 +1793,7 @@ export default function CarpoolApp() {
                       <th>{t.name}</th>
                       <th>{t.team}</th>
                       <th>{t.langCol}</th>
+                      <th>{t.noteCol}</th>
                       <th>{t.mode}</th>
                       {LEGS.map((lg, i) => (
                         <th key={i}>{t.leg} {i + 1}</th>
@@ -1404,6 +1827,21 @@ export default function CarpoolApp() {
                               onValueChange={(v) => patch(p.id, { lang: v })}
                               options={LANG_OPTIONS.map((l) => ({ value: l, label: l }))}
                               label={`${t.langCol}: ${p.name}`}
+                            />
+                          </td>
+                          <td data-label={t.noteCol}>
+                            <input
+                              key={`${p.id}:${p.note}`}
+                              className="cell-input note"
+                              defaultValue={p.note}
+                              maxLength={60}
+                              placeholder="–"
+                              aria-label={`${t.noteCol}: ${p.name}`}
+                              onBlur={(e) => {
+                                const v = e.target.value.trim();
+                                if (v !== p.note) patch(p.id, { note: v });
+                              }}
+                              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                             />
                           </td>
                           <td data-label={t.mode}>
@@ -1521,6 +1959,42 @@ export default function CarpoolApp() {
           {dnd.drag.person.name}
         </div>
       ) : null}
+      {rulesOpen ? (
+        <div className="modal-backdrop" onClick={() => setRulesOpen(false)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label={t.rulesH} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h2>{t.rulesH}</h2>
+              <button className="icon-btn" onClick={() => setRulesOpen(false)} aria-label={t.close} title={t.close}>
+                <X size={18} aria-hidden />
+              </button>
+            </div>
+            <div className="modal-scroll">
+              <div className="rules-head">
+                <p className="tile-note">{t.rulesSub}</p>
+                <LangSelect
+                  className="wide add-rule"
+                  align="end"
+                  noClear
+                  value=""
+                  placeholder={t.addRule}
+                  label={t.addRule}
+                  options={RULE_TYPES.map((k) => ({ value: k, label: t.ruleTypes[k] }))}
+                  onValueChange={(v) => v && addRule(v)}
+                />
+              </div>
+              {rules.length ? (
+                <ul className="rule-list-edit">
+                  {rules.map((r) => (
+                    <RuleRow key={r.id} rule={r} persons={persons} teams={teamList} t={t} onChange={changeRule} onRemove={() => removeRule(r.id)} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="rules-empty">{t.noRules}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
       {layoutEdit ? (
         <div className="layout-bar" role="toolbar" aria-label={t.layoutH}>
           <div className="lb-variants" role="group" aria-label={t.variants}>
@@ -1582,18 +2056,19 @@ export default function CarpoolApp() {
           </div>
         </div>
       ) : null}
-      <header className="cp-nav">
+      <header className={`cp-nav${scrolled ? " scrolled" : ""}`}>
         <img className="cp-logo" src={logo} alt="alseda Consulting" />
         <div className="cp-nav-right">
+          <nav className="cp-nav-links" aria-label={t.goTo}>
+            {sectionLinks.map((l) => (
+              <a key={l.id} href={`#${l.id}`} className={activeSec === l.id ? "on" : ""}>
+                {l.nav}
+              </a>
+            ))}
+          </nav>
           <button className={`cp-layout-btn${layoutEdit ? " on" : ""}`} onClick={() => setLayoutEdit((o) => !o)} aria-pressed={layoutEdit}>
             <LayoutList size={16} aria-hidden /> <span>{t.layout}</span>
           </button>
-          <nav className="cp-nav-links">
-            <a href="#cars">{t.navCars}</a>
-            <a href="#tram">{t.navTram}</a>
-            <a href="#taxi">{t.navTaxi}</a>
-            <a href="#all">{t.navAll}</a>
-          </nav>
           <div className="cp-lang" role="group" aria-label="Language">
             {["de", "en"].map((l) => (
               <button key={l} className={l === lang ? "on" : ""} onClick={() => setLang(l)} aria-pressed={l === lang}>
@@ -1601,8 +2076,73 @@ export default function CarpoolApp() {
               </button>
             ))}
           </div>
+          <button className="cp-menu-btn" onClick={openDrawer} aria-label={t.menu} aria-haspopup="dialog" title={t.menu}>
+            <Menu size={20} aria-hidden />
+          </button>
         </div>
       </header>
+      {drawerOpen ? (
+        <div className={`drawer-backdrop${drawerClosing ? " closing" : ""}`} onClick={() => closeDrawer()}>
+          <aside className="drawer" role="dialog" aria-modal="true" aria-label={t.menu} onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-head">
+              <img className="drawer-logo" src={logo} alt="alseda Consulting" />
+              <strong className="drawer-title">{t.plannerMenu}</strong>
+              <button className="icon-btn" onClick={() => closeDrawer()} aria-label={t.close} title={t.close}>
+                <X size={18} aria-hidden />
+              </button>
+            </div>
+            <div className="drawer-scroll">
+              <nav className="drawer-links" aria-label={t.goTo}>
+                {sectionLinks.map((l) => {
+                  const Icon = l.icon;
+                  return (
+                    <a key={l.id} href={`#${l.id}`} className={activeSec === l.id ? "on" : ""} onClick={() => closeDrawer()}>
+                      <Icon size={18} aria-hidden />
+                      <span>{l.label}</span>
+                      <b>{l.count}</b>
+                    </a>
+                  );
+                })}
+              </nav>
+              <div className="drawer-actions">
+                <button className="ghost" onClick={() => closeDrawer(() => setLayoutEdit(true))}>
+                  <LayoutList size={16} aria-hidden /> {t.layout}
+                </button>
+                <button className="ghost" onClick={() => closeDrawer(() => setRulesOpen(true))}>
+                  <ListPlus size={16} aria-hidden /> {t.rulesBtn}
+                </button>
+              </div>
+              <button className="btn-grad drawer-export" onClick={() => closeDrawer(() => exportPlan())}>
+                <Download size={16} aria-hidden /> {t.export}
+              </button>
+            </div>
+            <div className="drawer-bottom">
+              <div className="drawer-lang">
+                <span className={lang === "de" ? "on" : ""}>Deutsch</span>
+                <button
+                  className={`lang-switch${lang === "en" ? " en" : ""}`}
+                  role="switch"
+                  aria-checked={lang === "en"}
+                  aria-label="Language"
+                  onClick={() => setLang(lang === "de" ? "en" : "de")}
+                >
+                  <i />
+                </button>
+                <span className={lang === "en" ? "on" : ""}>English</span>
+              </div>
+              <div className="drawer-foot">
+                <span>© {new Date().getFullYear()} {t.rights}</span>
+                <a href="https://alseda.eu/" target="_blank" rel="noopener noreferrer" aria-label="alseda.eu" title="alseda.eu">
+                  <WebIcon />
+                </a>
+                <a href="https://uk.linkedin.com/company/alseda-consulting" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn">
+                  <LinkedInIcon />
+                </a>
+              </div>
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       <div className="cp-wrap">
         <div className="cp-bento">
