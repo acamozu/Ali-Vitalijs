@@ -1051,6 +1051,8 @@ export default function CarpoolApp() {
     document.body.style.overflow = "hidden";
     const esc = (e) => {
       if (e.key !== "Escape") return;
+      // an open dropdown is the top layer: Esc closes that one first
+      if (document.querySelector(".select__trigger[data-popup-open]")) return;
       setRulesOpen(false);
       closeDrawerRef.current();
     };
@@ -1272,14 +1274,22 @@ export default function CarpoolApp() {
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f) return;
-    const r = new FileReader();
-    r.onload = () => {
-      const list = parseRoster(String(r.result));
+    const apply = (text) => {
+      const list = parseRoster(text);
       if (!list.length) return window.alert(t.csvEmpty);
       if (window.confirm(t.replaceAsk(list.length))) {
         // rules about named people no longer fit a new list
         setDoc({ persons: list, edits: {}, rules: rules.filter((r) => r.type !== "pair" && r.type !== "person") });
       }
+    };
+    // UTF-8 first; a German Excel saves "CSV" as windows-1252 (ä, ö, ü, ß are not valid UTF-8): then read it again that way
+    const r = new FileReader();
+    r.onload = () => {
+      const utf8 = String(r.result);
+      if (!utf8.includes("\uFFFD")) return apply(utf8);
+      const r2 = new FileReader();
+      r2.onload = () => apply(String(r2.result));
+      r2.readAsText(f, "windows-1252");
     };
     r.readAsText(f, "utf-8");
   };
