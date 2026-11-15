@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { ListChecks, CarTaxiFront, Users, MessageSquareText, Menu, ListPlus, ArrowRight, Trash2, Pencil, LayoutList, ArrowUp, ArrowDown, GripVertical, Car, Train, Ticket, Check, Download, Upload, Plus, Minus, X, RotateCcw, Undo2, Redo2, Copy, Save, FolderOpen, TriangleAlert, Info, CircleCheck } from "lucide-react";
+import { ListChecks, CarTaxiFront, Users, MessageSquareText, Menu, ListPlus, ArrowRight, Trash2, Pencil, LayoutList, ArrowUp, ArrowDown, GripVertical, Car, Train, Ticket, Check, Download, Upload, Plus, Minus, X, RotateCcw, Undo2, Redo2, Copy, Save, FolderOpen, TriangleAlert, Info, CircleCheck, ChevronDown } from "lucide-react";
 import { tagColors, NO_TAG } from "./tags.js";
 import LangSelect from "./LangSelect.jsx";
 import { computeChecks, newRule, cleanRules, ruleReady, RULE_TYPES } from "./checks.js";
@@ -92,6 +92,7 @@ const TEXT = {
     add: "Hinzufügen",
     load: "CSV laden",
     reset: "Testdaten",
+    removeAsk: (n) => `${n} entfernen?`,
     resetAsk: "Alle Änderungen verwerfen und die Testdaten laden?",
     replaceAsk: (n) => `${n} Personen aus der Datei laden und die aktuelle Liste ersetzen?`,
     csvEmpty: "In der Datei wurden keine Namen gefunden.",
@@ -295,6 +296,7 @@ const TEXT = {
     add: "Add",
     load: "Load CSV",
     reset: "Test data",
+    removeAsk: (n) => `Remove ${n}?`,
     resetAsk: "Discard all changes and load the test data?",
     replaceAsk: (n) => `Load ${n} people from the file and replace the current list?`,
     csvEmpty: "No names were found in the file.",
@@ -614,6 +616,11 @@ function Seat({ p, idx, carId, dnd, pick, t }) {
           <span key={i}>{w}</span>
         ))}
       </span>
+      {p.team ? (
+        <span className="seat-region" title={p.team}>
+          {p.team}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -707,6 +714,11 @@ function Slot({ p, idx, boxId, kind, dnd, pick, t, buyer, onBuyer }) {
         <Icon size={15} aria-hidden />
       </span>
       <span className="pp-name">{p.name}</span>
+      {p.team ? (
+        <span className="team-chip" title={p.team}>
+          {p.team}
+        </span>
+      ) : null}
       <TagDot p={p} className="lang-tag inline" />
       {p.note ? <NoteFlag note={p.note} inline /> : null}
       {kind === "tram" ? (
@@ -1020,6 +1032,8 @@ export default function CarpoolApp() {
   const [renaming, setRenaming] = useState(null); // id of the variant whose name is being edited in the bar
   const [drawerOpen, setDrawerOpen] = useState(false); // side menu on tablet / phone
   const [drawerClosing, setDrawerClosing] = useState(false); // true while it slides out
+  const [delAsk, setDelAsk] = useState(null); // person id waiting for the delete confirmation
+  const [openRows, setOpenRows] = useState({}); // person id -> true when the phone card is open
   const drawerTimer = useRef(0);
   const closeDrawerRef = useRef(() => {});
   const DRAWER_MS = 320;
@@ -1054,6 +1068,7 @@ export default function CarpoolApp() {
       // an open dropdown is the top layer: Esc closes that one first
       if (document.querySelector(".select__trigger[data-popup-open]")) return;
       setRulesOpen(false);
+      setDelAsk(null);
       closeDrawerRef.current();
     };
     window.addEventListener("keydown", esc);
@@ -1145,6 +1160,8 @@ export default function CarpoolApp() {
   const to = L.to.name[lang];
 
   useEffect(() => setPicked(null), [planKey, leg]);
+  // one dialog at a time: opening any dialog drops a half-finished selection
+  useEffect(() => { if (delAsk || rulesOpen || drawerOpen) setPicked(null); }, [delAsk, rulesOpen, drawerOpen]);
   useEffect(() => {
     const esc = (e) => e.key === "Escape" && setPicked(null);
     window.addEventListener("keydown", esc);
@@ -1252,7 +1269,18 @@ export default function CarpoolApp() {
   // ---------- roster actions ----------
   const patch = (id, change) => setPersons((ps) => ps.map((p) => (p.id === id ? { ...p, ...change } : p)));
   const toggleLeg = (p, i) => patch(p.id, { legs: p.legs.map((v, j) => (j === i ? !v : v)) });
-  const removePerson = (id) => setPersons((ps) => ps.filter((p) => p.id !== id));
+  // while the delete dialog is open the page behind it must not scroll
+  useEffect(() => {
+    if (!delAsk) return undefined;
+    const prev = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    return () => { document.documentElement.style.overflow = prev; };
+  }, [delAsk]);
+  const removePerson = (id) => setDelAsk(id); // asks first, see the dialog below
+  const removeNow = () => {
+    setPersons((ps) => ps.filter((p) => p.id !== delAsk));
+    setDelAsk(null);
+  };
   const addPerson = (name) => setPersons((ps) => [...ps, newPerson(name || nextName(ps))]);
   const setCount = (n) =>
     setPersons((ps) => {
@@ -1817,7 +1845,7 @@ export default function CarpoolApp() {
                       const a = assignment.get(p.id);
                       const idx = persons.indexOf(p) + 1;
                       return (
-                        <tr key={p.id} className={p.legs[leg] ? "" : "is-away"}>
+                        <tr key={p.id} className={(p.legs[leg] ? "" : "is-away") + (openRows[p.id] ? "" : " folded")}>
                           <td className="c-num" data-label="#">{idx}</td>
                           <td data-label={t.name}>{p.name}</td>
                           <td data-label={t.team}>
@@ -1896,6 +1924,9 @@ export default function CarpoolApp() {
                             )}
                           </td>
                           <td className="c-del" data-label="">
+                            <button className="fold-btn" onClick={() => setOpenRows((o) => ({ ...o, [p.id]: !o[p.id] }))} aria-expanded={!!openRows[p.id]} aria-label={`${p.name}: ${openRows[p.id] ? "Close" : "Open"}`}>
+                              <ChevronDown size={18} aria-hidden />
+                            </button>
                             <button className="icon-btn" onClick={() => removePerson(p.id)} aria-label={`${t.remove}: ${p.name}`} title={t.remove}>
                               <Trash2 size={16} aria-hidden />
                             </button>
@@ -1967,6 +1998,17 @@ export default function CarpoolApp() {
       {dnd.drag ? (
         <div className="drag-ghost" style={{ left: dnd.drag.x, top: dnd.drag.y }}>
           {dnd.drag.person.name}
+        </div>
+      ) : null}
+      {delAsk && byId[delAsk] ? (
+        <div className="modal-backdrop" onClick={() => setDelAsk(null)}>
+          <div className="modal confirm" role="alertdialog" aria-modal="true" aria-label={t.remove} onClick={(e) => e.stopPropagation()}>
+            <h2>{t.removeAsk(byId[delAsk].name)}</h2>
+            <div className="confirm-actions">
+              <button className="ghost" onClick={() => setDelAsk(null)} autoFocus>{t.cancel}</button>
+              <button className="ghost danger" onClick={removeNow}><Trash2 size={15} aria-hidden /> {t.remove}</button>
+            </div>
+          </div>
         </div>
       ) : null}
       {rulesOpen ? (

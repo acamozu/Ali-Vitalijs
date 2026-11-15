@@ -776,3 +776,49 @@ button, select { font: inherit; }
 @media (prefers-reduced-motion: reduce) { .drawer-backdrop, .drawer, .drawer-backdrop.closing, .drawer-backdrop.closing .drawer { animation-duration: .01s; } }
 
 @media (max-width: 359px) { .drawer-title { font-size: .86rem; } .drawer-logo { width: 54px; height: 54px; } }
+
+/* team of a person: a small third line on the seat, a small label in tram / taxi lists */
+.seat-region { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.team-chip { flex: 0 1 auto; min-width: 0; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .72rem; font-weight: 600; color: hsl(var(--muted-foreground)); }
+.pp.slot { flex-wrap: nowrap; }
+.pp.slot .pp-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* phones: cards may shrink, the team label gets less room and the ticket buyer is shown as the ticket icon only */
+.pcard, .plan-grid > * { min-width: 0; }
+@media (max-width: 559px) { .team-chip { max-width: 34%; } .buy.on span { display: none; } }
+
+/* team and language are not the same grey: the team is a little lighter than the language code */
+.seat-region { color: #00000080; }
+.team-chip { color: #858585; }
+
+
+/* phones: a person card folds down to one title row (number + name), animated */
+.fold-btn { display: none; }
+@media (max-width: 699px) {
+  .tbl td.c-del { display: flex; align-items: center; gap: 2px; top: 8px; }
+  .fold-btn { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center; border: 0; background: transparent; color: hsl(var(--foreground)); border-radius: 8px; cursor: pointer; }
+  .fold-btn svg { transition: transform .28s ease; }
+  .tbl tr.folded .fold-btn svg { transform: rotate(-90deg); }
+  .tbl tr { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; }
+  .tbl td.c-num { width: auto; padding: 8px 0; }
+  .tbl td:nth-child(2) { width: auto; min-width: 0; padding: 8px 84px 8px 0; text-align: left; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .tbl td:nth-child(2)::before { content: none; }
+  .tbl td:not(.c-num):not(:nth-child(2)):not(.c-del) { grid-column: 1 / -1; overflow: hidden; margin-inline: -6px; padding-inline: 6px; max-height: 90px; opacity: 1; transition: max-height .3s ease, opacity .22s ease .06s, padding .3s ease, visibility 0s; }
+  .tbl tr.folded td:not(.c-num):not(:nth-child(2)):not(.c-del) { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; visibility: hidden; transition: max-height .3s ease, opacity .15s ease, padding .3s ease, visibility 0s .3s; }
+}
+
+/* phones: the dropdown is as wide as its field, not wider */
+@media (max-width: 699px) { .select__popup { min-width: var(--anchor-width); } }
+
+/* delete confirmation (in the page, not the browser's own box) */
+.modal.confirm { width: min(380px, 100%); padding: 24px; gap: 18px; text-align: left; }
+.modal.confirm h2 { font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.confirm-actions .ghost { flex: 1 1 0; }
+.ghost.danger { background: hsl(0 72% 48%); border-color: transparent; color: #fff; }
+@media (hover: hover) { .ghost.danger:hover { background: hsl(0 72% 40%); color: #fff; } }
+
+.modal-backdrop:has(.confirm) { touch-action: none; }
+
+/* while a dialog is open nothing else floats on the page */
+.cp:has(.modal-backdrop, .drawer-backdrop) :is(.pick-bar, .toast, .layout-bar) { display: none; }
