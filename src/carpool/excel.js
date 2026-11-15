@@ -66,11 +66,13 @@ function printSetup(ws) {
 }
 
 const first = (name) => String(name || "").split(" ")[0];
-const joinList = (arr, lang) => (arr.length < 2 ? arr.join("") : `${arr.slice(0, -1).join(", ")} ${lang === "de" ? "und" : "and"} ${arr[arr.length - 1]}`);
+const AND = { de: "und", en: "and", ru: "и" };
+const joinList = (arr, lang) => (arr.length < 2 ? arr.join("") : `${arr.slice(0, -1).join(", ")} ${AND[lang]} ${arr[arr.length - 1]}`);
 
 // the text for one person on one leg, ready to copy into a mail or chat
 function personMessage({ p, l, lg, lay, byId, lang, t, time }) {
   const de = lang === "de";
+  const ru = lang === "ru";
   const where = (() => {
     for (const [n, id] of lay.order.cars.entries()) {
       const i = lay.boxes[id].indexOf(p.id);
@@ -80,12 +82,13 @@ function personMessage({ p, l, lg, lay, byId, lang, t, time }) {
     for (const [n, id] of lay.order.taxis.entries()) if (lay.boxes[id].includes(p.id)) return { kind: "taxi", id, n: n + 1, slots: lay.boxes[id] };
     return null;
   })();
-  if (!where) return de ? `Für ${t.leg} ${l + 1} bist du nicht eingeplant.` : `You are not planned for ${t.leg} ${l + 1}.`;
+  if (!where) return ru ? `На этап ${l + 1} вы не запланированы.` : de ? `Für ${t.leg} ${l + 1} bist du nicht eingeplant.` : `You are not planned for ${t.leg} ${l + 1}.`;
   const others = where.slots.filter((x) => x && x !== p.id).map((x) => byId[x].name);
   const from = lg.from.name[lang];
   const to = lg.to.name[lang];
-  const when = de ? `Abfahrt: ${time} Uhr ab ${from} nach ${to}.` : `Departure: ${time} from ${from} to ${to}.`;
-  const hi = de ? `Hallo ${first(p.name)}, bei ${t.leg} ${l + 1} ` : `Hello ${first(p.name)}, on ${t.leg} ${l + 1} `;
+  const when = ru ? `Отправление: ${time} из «${from}» в «${to}».` : de ? `Abfahrt: ${time} Uhr ab ${from} nach ${to}.` : `Departure: ${time} from ${from} to ${to}.`;
+  const hi = ru ? `Здравствуйте, ${first(p.name)}! На этапе ${l + 1} ` : de ? `Hallo ${first(p.name)}, bei ${t.leg} ${l + 1} ` : `Hello ${first(p.name)}, on ${t.leg} ${l + 1} `;
+  if (ru) return personMessageRu({ where, others, hi, when, byId, lay, p, lang });
   if (where.kind === "car") {
     if (where.driver)
       return de
@@ -113,6 +116,23 @@ function personMessage({ p, l, lg, lay, byId, lang, t, time }) {
     : `${hi}you take taxi ${where.n}${others.length ? ` with ${joinList(others, lang)}` : ""}. ${when}`;
 }
 
+// the Russian wording of the message (German and English are written out inline in personMessage)
+function personMessageRu({ where, others, hi, when, byId, lay, p, lang }) {
+  if (where.kind === "car") {
+    if (where.driver) return `${hi}вы едете водителем в авто ${where.n}. ${others.length ? `Ваши пассажиры: ${joinList(others, lang)}.` : "Вы едете один."} ${when}`;
+    const driver = byId[where.slots[0]].name;
+    const rest = others.filter((n) => n !== driver);
+    return `${hi}вы едете в авто ${where.n} с ${driver} (водитель)${rest.length ? ` и ${joinList(rest, lang)}` : ""}. ${when}`;
+  }
+  if (where.kind === "tram") {
+    const buyerId = lay.buyers[where.id];
+    if (buyerId === p.id) return `${hi}вы едете в группе ${where.n} на общественном транспорте. Вы покупаете групповой билет${others.length ? ` для ${joinList(others, lang)}` : ""}. ${when}`;
+    const buyer = byId[buyerId]?.name;
+    return `${hi}вы едете в группе ${where.n} на общественном транспорте${others.length ? ` вместе с ${joinList(others, lang)}` : ""}. Групповой билет покупает ${buyer}. ${when}`;
+  }
+  return `${hi}вы едете на такси ${where.n}${others.length ? ` с ${joinList(others, lang)}` : ""}. ${when}`;
+}
+
 export async function buildWorkbook({ persons, layouts, legs, lang, t, checks, date }) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
@@ -133,7 +153,7 @@ export async function buildWorkbook({ persons, layouts, legs, lang, t, checks, d
   const ov = wb.addWorksheet(t.xl.overview, { views: [{ showGridLines: false }] });
   ov.columns = [{ width: 12 }, { width: 10 }, { width: 28 }, { width: 28 }, { width: 12 }, { width: 11 }, { width: 11 }, { width: 11 }, { width: 14 }, { width: 12 }];
   band(ov, 1, 10, `${t.xl.title} · ${date}`, C.dark, { size: 16, color: C.white, height: 34 });
-  const oh = [H[0], H[1], H[2], H[3], t.persons, t.car, "Tram", t.taxi, t.notThere, t.checksH];
+  const oh = [H[0], H[1], H[2], H[3], t.persons, t.car, t.segTram, t.taxi, t.notThere, t.checksH];
   oh.forEach((l, i) => {
     const c = ov.getCell(3, i + 1);
     c.value = l;

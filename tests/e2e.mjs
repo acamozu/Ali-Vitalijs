@@ -507,6 +507,11 @@ await run("13 · people table (roster)", async () => {
   const row = (name) => `[...${$$(".tbl tbody tr")}].find(r => r.children[1].textContent === ${JSON.stringify(name)})`;
   // remove
   await click(`${row("Zora Zeit")}.querySelector('.icon-btn')`);
+  check("trash asks first, in the page's own dialog (not the browser's)", await exists(".modal.confirm"));
+  await click($(".modal.confirm .ghost:not(.danger)"));
+  check("cancel keeps the person and closes the dialog", (await peopleTitle()) === "Personen (41)" && !(await exists(".modal.confirm")));
+  await click(`${row("Zora Zeit")}.querySelector('.icon-btn')`);
+  await click($(".modal.confirm .ghost.danger"));
   eq("trash removes the person", await peopleTitle(), "Personen (40)");
   // car toggle + seats
   const bea = "Bea Beispiel";
@@ -738,10 +743,13 @@ await run("17 · navbar, side menu, sections", async () => {
   check("square frame, logo on top, title in the middle", (await ev(`getComputedStyle(${$(".drawer")}).borderRadius`)) === "0px" && (await exists(".drawer-head .drawer-logo")) && (await text(".drawer-title")) === "Planer-Menü");
   eq("menu rows with counts", await ev(`[...${$$(".drawer-links a")}].map(a => a.querySelector('span').textContent + ' ' + a.querySelector('b').textContent)`), ["Hinweise 0", "Fahrgemeinschaften 20", "ÖPNV 20", "Taxi 0", "Personen 40", "Karten & Nachrichten 8"]);
   check("no captions, no leg switch in the menu", (await count(".drawer-label")) === 0 && (await count(".drawer-legs")) === 0);
-  // language toggle in the menu
-  await click($(".lang-switch"), 400);
-  eq("language switch changes the language", [await ev("document.documentElement.lang"), await text(".drawer-title")], ["en", "Planner Menu"]);
-  await click($(".lang-switch"), 400);
+  // language buttons in the menu: DE / EN / RU
+  await click($(".drawer .cp-lang button:nth-child(2)"), 400);
+  eq("language buttons: EN", [await ev("document.documentElement.lang"), await text(".drawer-title")], ["en", "Planner Menu"]);
+  await click($(".drawer .cp-lang button:nth-child(3)"), 400);
+  eq("language buttons: RU", [await ev("document.documentElement.lang"), await text(".drawer-title")], ["ru", "Меню"]);
+  await click($(".drawer .cp-lang button:nth-child(1)"), 400);
+  eq("language buttons: back to DE", await ev("document.documentElement.lang"), "de");
   check("mini footer: text left, icons right", await ev(`(() => { const s = ${$(".drawer-foot span")}.getBoundingClientRect(), a = ${$(".drawer-foot a")}.getBoundingClientRect(); return s.left < a.left; })()`));
   // close: slides out, then it is gone
   await click($(".drawer-head .icon-btn"), 80);
@@ -1052,15 +1060,19 @@ await run("28 · touch (a phone with real touch events)", async () => {
   // side menu by touch
   await tap($(".cp-menu-btn"), 700);
   check("a tap opens the side menu", await exists(".drawer"));
-  await tap($(".lang-switch"), 400);
-  eq("touch on the language switch", await ev("document.documentElement.lang"), "en");
-  await tap($(".lang-switch"), 400);
+  await tap($(".drawer .cp-lang button:nth-child(2)"), 400);
+  eq("touch on the language buttons", await ev("document.documentElement.lang"), "en");
+  await tap($(".drawer .cp-lang button:nth-child(1)"), 400);
   await tap(startsWith(".drawer-links a", "ÖPNV"), 1600);
   check("a tap on a menu link scrolls to the section", !(await exists(".drawer")) && Math.abs((await ev(`${$("#tram")}.getBoundingClientRect().top`)) - 92) <= 1);
   // time field and dropdown by touch
   await tap(nth("#tram .time-input", 0), 300);
   check("a tap in the time field focuses it (numeric keyboard on a phone)", (await ev("document.activeElement.className")).includes("time-input") && (await ev("document.activeElement.inputMode")) === "numeric");
   await ev("document.activeElement.blur()");
+  check("phone: all person cards start folded", (await count(".tbl tbody tr.folded")) === 40);
+  await tap(nth(".tbl tbody tr", 0) + ".querySelector('.fold-btn')", 600);
+  check("the arrow opens one card", (await count(".tbl tbody tr.folded")) === 39);
+  check("the arrow is labelled in the page language (German)", /Zuklappen/.test(await ev(`${nth(".tbl tbody tr", 0)}.querySelector('.fold-btn').getAttribute('aria-label')`)));
   await tap(nth(".tbl tbody tr", 0) + `.querySelectorAll('.select__trigger')[0]`, 400);
   check("a dropdown opens by touch", (await menuItems()).length === 6);
   await send("Emulation.setTouchEmulationEnabled", { enabled: false });
@@ -1081,6 +1093,49 @@ await run("29 · other languages and time zones of the computer", async () => {
   }
   await send("Emulation.setLocaleOverride", {}).catch(() => {});
   await send("Emulation.setTimezoneOverride", { timezoneId: "" }).catch(() => {});
+});
+
+await run("29b · name box (search + add), bell, Russian, loading screen", async () => {
+  await fresh();
+  const box = $(".add-form input");
+  const setSearch = async (txt) => {
+    await click(box, 120);
+    await ev(`${box}.select()`);
+    if (txt) await send("Input.insertText", { text: txt });
+    else { await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 }); await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 }); }
+    await wait(300);
+  };
+  const names = () => ev(`[...${$$(".tbl tbody tr")}].map(r => r.children[1].textContent)`);
+  check("the name box says it searches and adds", /suchen/.test(await ev(`${box}.placeholder`)));
+  await setSearch("alex");
+  const hit = await names();
+  check("typing filters the list by name", hit.length >= 1 && hit.length < 40 && hit.every((n) => /alex/i.test(n)), hit.join(","));
+  await setSearch("zzzz");
+  check("no match: empty list and a hint that Hinzufügen creates the person", (await count(".tbl tbody tr")) === 0 && /Niemand mit/.test(await ev("document.querySelector('#all').innerText")));
+  await click(`${$(".add-form .ghost")}`);
+  check("Hinzufügen adds a person with the typed name and clears the box", (await peopleTitle()) === "Personen (41)" && (await ev(`${box}.value`)) === "" );
+  check("the new person is in the list under that name", (await names()).includes("zzzz"));
+  // bell
+  await fresh();
+  check("bell: no number while there is nothing to flag", (await exists(".cp-bell")) && (await count(".cp-bell b")) === 0);
+  await click($(".cp-bell"), 900);
+  const top = await ev(`${$("#checks")}.getBoundingClientRect().top`);
+  check("bell: jumps to the checks section", top > 60 && top < 120, "top " + top);
+  // Russian
+  await click($(".cp-nav .cp-lang button:nth-child(3)"), 500);
+  check("RU: page language, headings and date", (await ev("document.documentElement.lang")) === "ru" && /Поездки на авто/.test(await text("#cars .tile-title")) && /ноября 2026/.test(await text(".holo-facts")));
+  check("RU: no German or English left in the main headings", !/[A-Za-z]{4,}/.test((await text("#cars .tile-title")) + (await text("#tram .tile-title")) + (await text("#taxi .tile-title")) + (await text("#checks .tile-title"))));
+  await click($(".cp-nav .cp-lang button:nth-child(1)"), 400);
+  eq("back to German", await ev("document.documentElement.lang"), "de");
+  // loading screen: shows up, then goes away by itself; ?nosplash skips it
+  await send("Page.navigate", { url: URL_.replace("?nosplash", "") });
+  await wait(700);
+  check("loading screen is shown on a normal visit", await exists(".cp-splash"));
+  await wait(7500);
+  check("and leaves by itself", !(await exists(".cp-splash")));
+  await send("Page.navigate", { url: URL_ });
+  await wait(900);
+  check("?nosplash skips it", !(await exists(".cp-splash")));
 });
 
 await run("30 · console", async () => {

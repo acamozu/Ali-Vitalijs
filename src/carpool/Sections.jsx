@@ -25,8 +25,8 @@ export function SectionLeg({ t, leg, setLeg, restBy, setRestBy, exportPlan }) {
                   <span>{t.restBy}</span>
                   <div className="seg" role="group" aria-label={t.restBy}>
                     {[
-                      ["tram", "Tram"],
-                      ["taxi", "Taxi"],
+                      ["tram", t.segTram],
+                      ["taxi", t.segTaxi],
                     ].map(([k, label]) => (
                       <button key={k} className={restBy === k ? "on" : ""} onClick={() => setRestBy(k)} aria-pressed={restBy === k}>
                         {label}
@@ -303,7 +303,7 @@ export function SectionPeople({ t, rows, setCount, persons, submitAdd, newName, 
                   ["all", t.filterAll],
                   ["car", t.car],
                   ["driver", t.driver],
-                  ["tram", "Tram"],
+                  ["tram", t.segTram],
                   ["taxi", t.taxi],
                   ["away", t.filterAway],
                 ].map(([k, label]) => (
@@ -322,6 +322,7 @@ export function SectionPeople({ t, rows, setCount, persons, submitAdd, newName, 
                   ))}
                 </div>
               ) : null}
+              {!rows.length && newName.trim() ? <p className="tile-note">{t.noMatch(newName.trim())}</p> : null}
               <div className="tbl-wrap">
                 <table className="tbl">
                   <thead>
@@ -423,7 +424,7 @@ export function SectionPeople({ t, rows, setCount, persons, submitAdd, newName, 
                             )}
                           </td>
                           <td className="c-del" data-label="">
-                            <button className="fold-btn" onClick={() => setOpenRows((o) => ({ ...o, [p.id]: !o[p.id] }))} aria-expanded={!!openRows[p.id]} aria-label={`${p.name}: ${openRows[p.id] ? "Close" : "Open"}`}>
+                            <button className="fold-btn" onClick={() => setOpenRows((o) => ({ ...o, [p.id]: !o[p.id] }))} aria-expanded={!!openRows[p.id]} aria-label={`${p.name}: ${openRows[p.id] ? t.foldClose : t.foldOpen}`}>
                               <ChevronDown size={18} aria-hidden />
                             </button>
                             <button className="icon-btn" onClick={() => removePerson(p.id)} aria-label={`${t.remove}: ${p.name}`} title={t.remove}>

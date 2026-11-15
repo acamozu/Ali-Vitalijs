@@ -28,11 +28,11 @@ const DRIVE = 1900; // the car crosses the road in this time, at a constant spee
 const DASH_MS = Math.round(DRIVE * 0.0932); // one dash period: the road lines flow at the same speed as the roadside light
 const DURATION = DRIVE_DELAY + DRIVE + 150; // about 5.3 s in all
 const FADE = 700;
-const TITLE = { de: "Transfer-Planer", en: "Transfer Planner" };
+const TITLE = { de: "Transfer-Planer", en: "Transfer Planner", ru: "Планировщик трансферов" };
 function splashLang() {
   const q = new URLSearchParams(location.search).get("lang");
-  if (q === "de" || q === "en") return q;
-  try { const s = localStorage.getItem("carpool-lang"); if (s === "de" || s === "en") return s; } catch {}
+  if (q in TITLE) return q;
+  try { const s = localStorage.getItem("carpool-lang"); if (s in TITLE) return s; } catch {}
   return "de";
 }
 

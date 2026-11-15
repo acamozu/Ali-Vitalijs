@@ -2,7 +2,7 @@ import React from "react";
 
 // Line-art skyline for the loading screen: buildings of different heights that share their walls.
 // Details are the ones a flat city illustration has: cornice, framed windows with a centre bar,
-// awnings, a door, a roof tank with chimney, an antenna, a tall slim window strip.
+// awnings, a door, a tall slim window strip.
 const GROUND = 130;
 const GAP = 6; // between windows
 const WIN_H = 10;
@@ -16,7 +16,7 @@ const BUILDINGS = [
   { x: 332, w: 68, h: 46, cols: 2, rows: 2, awning: [0] },
 ];
 
-function Building({ x, w, h, cols = 0, rows = 0, door, awning = [], tank, chimney, antenna, strip, shutters }) {
+function Building({ x, w, h, cols = 0, rows = 0, door, awning = [], strip, shutters }) {
   const top = GROUND - h;
   const out = [];
   out.push(<rect key="body" x={x} y={top} width={w} height={h} fill="#fff" />);
@@ -58,16 +58,6 @@ function Building({ x, w, h, cols = 0, rows = 0, door, awning = [], tank, chimne
 
   if (door) out.push(<rect key="door" x={x + w / 2 - 5} y={GROUND - 14} width="10" height="14" fill="#fff" />);
 
-  if (tank) {
-    out.push(<rect key="tank" x={x + w - 28} y={top - 14} width="18" height="14" fill="#fff" />);
-    out.push(<rect key="tankcap" x={x + w - 33} y={top - 8} width="5" height="8" fill="#fff" />);
-    out.push(<rect key="chim" x={x + w - 25} y={top - 19} width="8" height="5" fill="#fff" />);
-  }
-  if (chimney) out.push(<rect key="chimney" x={x + 6} y={top - 8} width="10" height="8" fill="#fff" />);
-  if (antenna) {
-    out.push(<line key="ant" x1={x + w / 2} y1={top} x2={x + w / 2} y2={top - 14} />);
-    out.push(<line key="antx" x1={x + w / 2 - 5} y1={top - 9} x2={x + w / 2 + 5} y2={top - 9} />);
-  }
   return <g key={x}>{out}</g>;
 }
 

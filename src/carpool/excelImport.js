@@ -2,13 +2,17 @@
 // columns: name, team, language, car, seats, then for every leg: leg time, assignment ("Auto 2", "Gruppe 1", "Taxi 3" or "nicht dabei"),
 // role (driver / group ticket) and the departure time of the vehicle.
 import { CAR_SEATS, MIN_SEATS, normLang } from "./planner.js";
+import { TEXT } from "./text.js";
 
-const SHEETS = ["personen", "people"];
-const AWAY = ["nicht dabei", "not joining", "–", "-"];
-const KINDS = { auto: "car", car: "car", gruppe: "group", group: "group", taxi: "taxi" };
-const DRIVER = ["fahrer:in", "driver"];
-const BUYER = ["gruppenticket", "group ticket"];
-const YES = ["✓", "x", "ja", "yes", "1", "true", "wahr", "evet"];
+// the words of every interface language (de / en / ru), so a plan exported in one language can be read back in any
+const ALL = Object.values(TEXT);
+const words = (get) => [...new Set(ALL.map((t) => get(t).toLowerCase()))];
+const SHEETS = words((t) => t.xl.people).concat("personen", "people");
+const AWAY = words((t) => t.notThere).concat("nicht dabei", "not joining", "–", "-");
+const KINDS = Object.fromEntries([...ALL.flatMap((t) => [[t.car.toLowerCase(), "car"], [t.group.toLowerCase(), "group"], [t.taxi.toLowerCase(), "taxi"]]), ["auto", "car"], ["car", "car"], ["gruppe", "group"], ["group", "group"], ["taxi", "taxi"]]);
+const DRIVER = words((t) => t.driver).concat("driver");
+const BUYER = words((t) => t.buyer).concat("group ticket");
+const YES = ["✓", "x", "ja", "yes", "1", "true", "wahr", "evet", "да"];
 
 const text = (v) => {
   if (v == null) return "";

@@ -469,11 +469,13 @@ export default function CarpoolApp() {
     }
   };
 
-  const eventDateShort = new Date(EVENT.date + "T12:00:00").toLocaleDateString(lang === "de" ? "de-DE" : "en-GB");
-  const eventDate = new Date(EVENT.date + "T12:00:00").toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const eventDateShort = new Date(EVENT.date + "T12:00:00").toLocaleDateString(({ de: "de-DE", en: "en-GB", ru: "ru-RU" })[lang]);
+  const eventDate = new Date(EVENT.date + "T12:00:00").toLocaleDateString(({ de: "de-DE", en: "en-GB", ru: "ru-RU" })[lang], { day: "numeric", month: "long", year: "numeric" });
   const onLeg = persons.length - away;
+  const search = newName.trim().toLowerCase(); // the name box is also the search box
   const rows = persons.filter((p) => {
     const a = assignment.get(p.id);
+    if (search && !p.name.toLowerCase().includes(search)) return false;
     if (tagFilter && tagOf(p, filterBy) !== tagFilter) return false;
     if (filter === "all") return true;
     if (filter === "away") return !p.legs[leg];

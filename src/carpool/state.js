@@ -4,13 +4,15 @@ import { cleanRules } from "./checks.js";
 
 export const STORE = "carpool-v3";
 
+export const LANGS = ["de", "en", "ru"];
+
 export function useLang() {
   const [lang, setLang] = useState(() => {
     const q = new URLSearchParams(window.location.search).get("lang");
-    if (q === "de" || q === "en") return q;
+    if (LANGS.includes(q)) return q;
     try {
       const s = localStorage.getItem("carpool-lang");
-      if (s === "de" || s === "en") return s;
+      if (LANGS.includes(s)) return s;
     } catch {}
     return "de";
   });

@@ -386,3 +386,37 @@ test("cards and messages: one card per car / non-empty group / non-empty taxi, w
   assert.equal(tc.length, 4);
   assert.ok(tc.every((c) => c.lead[0] === "Gruppenticket" && c.people.length === 4));
 });
+
+// ---------- Excel: export in every interface language, read back ----------
+import { buildWorkbook } from "../src/carpool/excel.js";
+import { readPlanFromExcel } from "../src/carpool/excelImport.js";
+import { TEXT } from "../src/carpool/text.js";
+import { structKeyOf } from "../src/carpool/state.js";
+
+for (const lang of ["de", "en", "ru"]) {
+  test(`Excel (${lang}): the exported plan reads back with the same people, cars and groups`, async () => {
+    const persons = defaultPersons();
+    const limits = { ...DEFAULT_LIMITS };
+    const layouts = LEGS.map((_, l) => {
+      const plan = planLeg(persons, l, "tram", limits, "none");
+      return { key: structKeyOf(persons, l, "tram", "none"), layout: baseLayout(plan, limits), away: plan.away };
+    });
+    const t = TEXT[lang];
+    const blob = await buildWorkbook({ persons, layouts, legs: LEGS, lang, t, checks: [], date: "27.11.2026" });
+    const back = await readPlanFromExcel(blob, { legs: LEGS, limits, keyOf: (ps, l) => structKeyOf(ps, l, "tram", "none") });
+    assert.equal(back.persons.length, persons.length);
+    assert.deepEqual(back.persons.map((p) => p.name), persons.map((p) => p.name));
+    assert.deepEqual(back.persons.map((p) => p.car), persons.map((p) => p.car));
+    assert.deepEqual(back.persons.map((p) => p.team), persons.map((p) => p.team));
+    assert.deepEqual(back.persons.map((p) => p.lang), persons.map((p) => p.lang));
+    for (const l of [0, 1]) {
+      const a = layouts[l].layout;
+      const b = back.edits[l].layout;
+      assert.equal(b.order.cars.length, a.order.cars.length, "number of cars");
+      assert.equal(b.order.groups.length, a.order.groups.length, "number of groups");
+      const names = (lay, id) => lay.boxes[id].filter(Boolean).map((pid) => (lay === a ? persons.find((p) => p.id === pid) : back.persons.find((p) => p.id === pid)).name).sort();
+      a.order.groups.forEach((id, i) => assert.deepEqual(names(b, b.order.groups[i]), names(a, id), "group members"));
+      a.order.cars.forEach((id, i) => assert.deepEqual(names(b, b.order.cars[i]), names(a, id), "car members"));
+    }
+  });
+}

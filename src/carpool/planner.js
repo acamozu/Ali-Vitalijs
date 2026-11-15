@@ -16,13 +16,13 @@ const T2 = AGENDA.find((a) => a.title.en.startsWith("Transfer to Casa"));
 export const LEGS = [
   {
     time: T1.from,
-    from: { name: { de: "JW Marriott", en: "JW Marriott" }, addr: EVENT.address },
-    to: { name: { de: "Altes Polizeipräsidium", en: "Old Police Headquarters" }, addr: police.location },
+    from: { name: { de: "JW Marriott", en: "JW Marriott", ru: "JW Marriott" }, addr: EVENT.address },
+    to: { name: { de: "Altes Polizeipräsidium", en: "Old Police Headquarters", ru: "Старое полицейское управление" }, addr: police.location },
   },
   {
     time: T2.from,
-    from: { name: { de: "Altes Polizeipräsidium", en: "Old Police Headquarters" }, addr: police.location },
-    to: { name: { de: "Casa Isoletta", en: "Casa Isoletta" }, addr: dinner.location },
+    from: { name: { de: "Altes Polizeipräsidium", en: "Old Police Headquarters", ru: "Старое полицейское управление" }, addr: police.location },
+    to: { name: { de: "Casa Isoletta", en: "Casa Isoletta", ru: "Casa Isoletta" }, addr: dinner.location },
   },
 ];
 
@@ -294,7 +294,7 @@ export function reconcileLayout(layout, riderIds, limits, restBy) {
 }
 
 // ---------- CSV (Excel in Germany saves with ";") ----------
-const YES = /^(1|x|j|ja|y|yes|true|wahr|evet|auto|car)$/i;
+const YES = /^(1|x|j|ja|y|yes|true|wahr|evet|да|auto|car|авто)$/i;
 const NO = /^(0|n|nein|no|false|falsch|hayir|hayır|-)$/i;
 
 function splitCsv(text) {

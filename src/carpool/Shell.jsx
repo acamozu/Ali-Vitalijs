@@ -139,13 +139,13 @@ export function Navbar({ scrolled, t, sectionLinks, activeSec, checks, warns, la
           </nav>
           <a className="cp-bell" href="#checks" aria-label={`${t.checksH}: ${checks.length}`} title={t.checksH}>
             <Bell size={18} aria-hidden />
-            <b className={warns ? "" : "calm"}>{checks.length}</b>
+            {checks.length ? <b className={warns ? "" : "calm"}>{checks.length}</b> : null}
           </a>
           <button className={`cp-layout-btn${layoutEdit ? " on" : ""}`} onClick={() => setLayoutEdit((o) => !o)} aria-pressed={layoutEdit}>
             <LayoutList size={16} aria-hidden /> <span>{t.layout}</span>
           </button>
           <div className="cp-lang" role="group" aria-label="Language">
-            {["de", "en"].map((l) => (
+            {["de", "en", "ru"].map((l) => (
               <button key={l} className={l === lang ? "on" : ""} onClick={() => setLang(l)} aria-pressed={l === lang}>
                 {l.toUpperCase()}
               </button>
@@ -197,17 +197,13 @@ export function Drawer({ drawerClosing, closeDrawer, t, sectionLinks, activeSec,
             </div>
             <div className="drawer-bottom">
               <div className="drawer-lang">
-                <span className={lang === "de" ? "on" : ""}>Deutsch</span>
-                <button
-                  className={`lang-switch${lang === "en" ? " en" : ""}`}
-                  role="switch"
-                  aria-checked={lang === "en"}
-                  aria-label="Language"
-                  onClick={() => setLang(lang === "de" ? "en" : "de")}
-                >
-                  <i />
-                </button>
-                <span className={lang === "en" ? "on" : ""}>English</span>
+                <div className="cp-lang" role="group" aria-label="Language">
+                  {["de", "en", "ru"].map((l) => (
+                    <button key={l} className={l === lang ? "on" : ""} onClick={() => setLang(l)} aria-pressed={l === lang}>
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="drawer-foot">
                 <span>© {new Date().getFullYear()} {t.rights}</span>

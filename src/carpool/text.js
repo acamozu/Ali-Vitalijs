@@ -1,4 +1,4 @@
-
+import { ru } from "./textRu.js";
 
 export const TEXT = {
   de: {
@@ -55,7 +55,8 @@ export const TEXT = {
     allSub: "Name, Auto und Teilnahme je Etappe. Änderungen planen sofort neu.",
     csvHint: "CSV: Name; Auto (ja/nein); Plätze; Etappe 1; Etappe 2; Team; Sprache. Nur der Name ist Pflicht.",
     count: "Anzahl",
-    addPh: "Name hinzufügen",
+    addPh: "Name suchen oder hinzufügen",
+    noMatch: (n) => `Niemand mit „${n}“ gefunden – „Hinzufügen“ legt die Person an.`,
     add: "Hinzufügen",
     load: "CSV laden",
     reset: "Testdaten",
@@ -201,6 +202,10 @@ export const TEXT = {
     newVariant: "Neue Variante",
     done: "Fertig",
     close: "Schließen",
+    segTram: "Tram",
+    segTaxi: "Taxi",
+    foldOpen: "Aufklappen",
+    foldClose: "Zuklappen",
     up: "Nach oben",
     down: "Nach unten",
     sections: { leg: "Etappe & Transport", plan: "Planung", counts: "Verteilung", checks: "Hinweise", cars: "Autos", tram: "Tram", taxi: "Taxi", people: "Personen", cards: "Karten & Nachrichten" },
@@ -259,7 +264,8 @@ export const TEXT = {
     allSub: "Name, car and attendance per leg. Changes re-plan right away.",
     csvHint: "CSV: Name; car (yes/no); seats; leg 1; leg 2; team; language. Only the name is required.",
     count: "Count",
-    addPh: "Add a name",
+    addPh: "Search or add a name",
+    noMatch: (n) => `Nobody found for “${n}” – “Add” creates this person.`,
     add: "Add",
     load: "Load CSV",
     reset: "Test data",
@@ -405,8 +411,13 @@ export const TEXT = {
     newVariant: "New variant",
     done: "Done",
     close: "Close",
+    segTram: "Tram",
+    segTaxi: "Taxi",
+    foldOpen: "Expand",
+    foldClose: "Collapse",
     up: "Move up",
     down: "Move down",
     sections: { leg: "Leg & transport", plan: "Planning", counts: "Distribution", checks: "Checks", cars: "Cars", tram: "Tram", taxi: "Taxi", people: "People", cards: "Cards & messages" },
   },
+  ru,
 };

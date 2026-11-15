@@ -734,12 +734,6 @@ button, select { font: inherit; }
 /* bottom of the side menu: language toggle, then a mini footer */
 .drawer-bottom { flex: none; border-top: 2px solid #000; }
 .drawer-lang { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 16px 20px; font-size: .82rem; font-weight: 700; }
-.drawer-lang > span { color: hsl(var(--muted-foreground)); transition: color .2s; }
-.drawer-lang > span.on { color: hsl(var(--foreground)); }
-.lang-switch { position: relative; flex: none; width: 52px; height: 30px; padding: 0; border: 0; border-radius: 999px; background: hsl(var(--foreground)); cursor: pointer; }
-.lang-switch i { position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; border-radius: 50%; background: hsl(var(--background)); transition: transform .2s; }
-.lang-switch.en i { transform: translateX(22px); }
-.lang-switch:focus-visible { outline: 2px solid hsl(var(--foreground)); outline-offset: 3px; }
 .drawer-foot { display: flex; align-items: center; gap: 10px; padding: 12px 20px 16px; border-top: 1px solid hsl(var(--border)); }
 .drawer-foot a { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
 .drawer-foot .icon-social { width: 18px; height: 18px; }
