@@ -729,6 +729,7 @@ button, select { font: inherit; }
 .drawer-links a.on b { background: #ffffffb3; }
 .drawer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .drawer-export { width: 100%; margin-top: 18px; }
+.cp-menu-btn:focus:not(:focus-visible) { outline: none; }
 @media (hover: hover) { .drawer-links a:hover { background: hsl(var(--muted)); } .cp-menu-btn:hover { background: hsl(var(--foreground)); color: hsl(var(--background)); } }
 
 /* bottom of the side menu: language toggle, then a mini footer */

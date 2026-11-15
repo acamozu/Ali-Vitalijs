@@ -60,6 +60,8 @@ export default function CarpoolApp() {
     drawerTimer.current = setTimeout(() => {
       setDrawerOpen(false);
       setDrawerClosing(false);
+      // after Esc the menu button would keep its keyboard focus ring and look stuck on hover
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       if (typeof after === "function") after();
     }, DRAWER_MS);
   };
