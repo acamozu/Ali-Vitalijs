@@ -8,7 +8,7 @@ import ExcelJS from "exceljs";
 import { defaultPersons as defaultPersons40 } from "../src/carpool/planner.js";
 
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const URL_ = process.env.URL || "http://localhost:5173/carpool.html";
+const URL_ = (process.env.URL || "http://localhost:5173/carpool.html") + "?nosplash"; // the loading splash would cover the page
 const PORT = 9560 + Math.floor(Math.random() * 100);
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "carpool-e2e-"));
 
