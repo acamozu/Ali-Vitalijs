@@ -847,3 +847,9 @@ button, select { font: inherit; }
 @keyframes cp-letter-in { to { opacity: 1; transform: none; filter: none; } }
 @keyframes cp-title-in { to { opacity: 1; filter: none; } }
 @media (prefers-reduced-motion: reduce) { .cp-s-letter, .cp-s-title, .cp-road, .cp-road-car, .cp-tl, .cp-road-mid { animation-duration: .01s !important; animation-delay: 0s !important; } }
+
+/* bell in the navbar: the number of hints, jumps to the checks section */
+.cp-bell { position: relative; flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid #0000001a; border-radius: 50%; background: hsl(var(--background) / .5); color: inherit; text-decoration: none; transition: all .2s; }
+@media (hover: hover) { .cp-bell:hover { background: hsl(var(--foreground)); color: hsl(var(--background)); } }
+.cp-bell b { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--grad-peach); color: #000; font-size: .7rem; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px hsl(var(--background)); }
+.cp-bell b.calm { background: var(--tile-green); }
