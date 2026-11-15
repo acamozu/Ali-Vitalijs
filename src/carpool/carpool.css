@@ -348,7 +348,7 @@ button, select { font: inherit; }
 
 /* checks */
 .checks-head { display: flex; align-items: center; gap: 14px; }
-.warn-badge { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 10px; border-radius: 999px; background: var(--grad-peach); font-size: .9rem; font-weight: 800; }
+.warn-badge { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 10px; border-radius: 999px; background: #d92d20; color: #fff; font-size: .9rem; font-weight: 800; }
 .check-list { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .check { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 14px; background: hsl(var(--background)); font-size: .92rem; font-weight: 500; }
 .check.ok { margin-top: 20px; align-items: center; background: var(--tile-green); font-weight: 600; }
@@ -550,7 +550,7 @@ button, select { font: inherit; }
   .check.go .check-text { grid-area: text; flex-basis: auto; line-height: 1.4; align-self: center; }
 }
 
-.warn-badge.calm { background: var(--tile-green); }
+.warn-badge.calm { background: hsl(var(--foreground)); color: hsl(var(--background)); }
 
 /* language code written on the seat */
 .lang-tag { position: absolute; top: 5%; right: 7%; font-size: 3cqw; font-weight: 800; letter-spacing: .05em; color: #000000a6; line-height: 1; }
@@ -846,5 +846,5 @@ button, select { font: inherit; }
 /* bell in the navbar: the number of hints, jumps to the checks section */
 .cp-bell { position: relative; flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid #0000001a; border-radius: 50%; background: hsl(var(--background) / .5); color: inherit; text-decoration: none; transition: all .2s; }
 @media (hover: hover) { .cp-bell:hover { background: hsl(var(--foreground)); color: hsl(var(--background)); } }
-.cp-bell b { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--grad-peach); color: #000; font-size: .7rem; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px hsl(var(--background)); }
-.cp-bell b.calm { background: var(--tile-green); }
+.cp-bell b { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #d92d20; color: #fff; font-size: .7rem; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px hsl(var(--background)); }
+.cp-bell b.calm { background: hsl(var(--foreground)); color: hsl(var(--background)); }
