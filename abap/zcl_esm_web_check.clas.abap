@@ -501,18 +501,6 @@ METHOD if_http_extension~handle_request.
       WHERE external_object    EQ @/aesm/cl_partner_handler=>con_metadata_object
         AND external_reference EQ @lv_reference
         AND request_id         EQ @iv_request_id. " only this check, other checks of the same name may be other persons
-    IF sy-dbcnt GT 0.
-      " BAdI /AESM/BADI_CHECK_FINISHED: the check now belongs to a partner (e.g. entry in S2S SCHUFA_B)
-      TRY.
-          DATA lo_badi_finished TYPE REF TO /aesm/badi_check_finished.
-          GET BADI lo_badi_finished.
-          CALL BADI lo_badi_finished->partner_assigned
-            EXPORTING
-              iv_request_id = iv_request_id
-              iv_partner    = ev_partner.
-        CATCH cx_root ##CATCH_ALL ##NO_HANDLER.
-      ENDTRY.
-    ENDIF.
     COMMIT WORK AND WAIT.
   ENDMETHOD.
 
