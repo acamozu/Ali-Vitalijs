@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { I18nContext, messages } from './i18n.js';
-import { verifyBp } from './api/verifyApi.js';
+import { verifyBp, fetchCockpit } from './api/verifyApi.js';
 import SearchPanel from './components/SearchPanel.jsx';
 import TariffList from './components/TariffList.jsx';
 import StepForm from './components/StepForm.jsx';
@@ -33,6 +33,19 @@ export default function App() {
   const [leaving, setLeaving] = useState(false);
   const [searchNo, setSearchNo] = useState(0); // new key per search, so the tariffs animate in again
   const timerRef = useRef(null);
+  const [accounts, setAccounts] = useState({ loading: true, error: '', data: null }); // list of the Konten view
+
+  // loaded at the start (the tab shows the count) and again every time the Konten view is opened
+  const loadAccounts = () =>
+    fetchCockpit()
+      .then((data) => setAccounts({ loading: false, error: '', data }))
+      .catch((e) => setAccounts((s) => ({ loading: false, error: e?.message || 'Error', data: s.data })));
+  useEffect(() => {
+    loadAccounts();
+  }, []);
+  useEffect(() => {
+    if (view === 'cockpit') loadAccounts();
+  }, [view]);
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
@@ -128,6 +141,16 @@ export default function App() {
           <div className="hero__text">
             <h1>{i18n.t.hero.title}</h1>
             <p>{i18n.t.hero.text}</p>
+            {/* phone only: the two views as tabs under the hero text (on larger screens the button in the top bar does it) */}
+            <div className="hero__tabs" role="tablist">
+              <button type="button" role="tab" aria-selected={view !== 'cockpit'} className={view !== 'cockpit' ? 'is-on' : ''} onClick={() => view === 'cockpit' && go('search')}>
+                {i18n.t.cockpit.calculator}
+              </button>
+              <button type="button" role="tab" aria-selected={view === 'cockpit'} className={view === 'cockpit' ? 'is-on' : ''} onClick={() => view !== 'cockpit' && go('cockpit')}>
+                {i18n.t.cockpit.button}
+                {accounts.data && <span className="hero__count">{accounts.data.rows.length}</span>}
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -149,7 +172,7 @@ export default function App() {
             onSelect={(tf) => go('form', () => setTariff(tf))}
           />
         )}
-        {view === 'cockpit' && <CockpitView />}
+        {view === 'cockpit' && <CockpitView state={accounts} onCancelled={loadAccounts} />}
         {view === 'form' && (
           <StepForm tariff={tariff} search={search} busy={busy} onSubmit={submit} onBack={() => go('tariffs')} />
         )}

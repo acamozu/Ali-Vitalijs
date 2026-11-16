@@ -89,21 +89,14 @@ body {
 .cockpit__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
 .cockpit h2 { margin: 0 0 4px; }
 .cockpit__count { color: var(--muted); font-weight: 500; }
+.cockpit__notice { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: #e3f5ea; color: var(--ok); font-weight: 600; }
 .cockpit__card {
   padding: 16px;
   /* same lifted look as the search card: shadow on the top edge as well as the bottom */
   box-shadow: 0 -6px 16px rgba(0, 46, 108, 0.07), 0 4px 10px rgba(0, 46, 108, 0.08), 0 18px 40px rgba(0, 46, 108, 0.14);
 }
-.cockpit__toolbar { display: flex; align-items: center; gap: 12px; }
-.cockpit__toolbar .cockpit__search { flex: 1; min-width: 0; }
-.cockpit__bulk { padding: 10px 16px; font-size: 0.9rem; white-space: nowrap; }
-.cockpit__bulk:disabled { opacity: 0.4; cursor: default; }
-.cockpit__bulk:disabled:hover { background: transparent; color: var(--bad); }
 .cockpit__end { text-align: right; width: 1%; }
-.cockpit__check { width: 1%; padding-right: 0; }
-.cockpit__check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; vertical-align: middle; }
 .cockpit__table tr.is-pending td { background: #fdecec; }
-.cockpit__table tr.is-selected td { background: #f3f6fb; }
 .cockpit__search { display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); }
 .cockpit__search:focus-within { outline: 2px solid var(--accent); border-color: transparent; color: var(--accent); }
 .cockpit__search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 12px 0; font: inherit; color: var(--text); }
@@ -585,29 +578,28 @@ h3 { margin: 0 0 4px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Accounts on a phone: no wide table, one card per account (like the product list pattern) */
-.cockpit__selectall { display: none; }
 @media (max-width: 720px) {
-  .cockpit__toolbar { flex-direction: column; align-items: stretch; }
-  .cockpit__bulk { width: 100%; padding: 12px 16px; }
-  .cockpit__selectall { display: flex; align-items: center; gap: 12px; padding: 14px 4px 6px; color: var(--muted); font-size: 0.9rem; }
-  .cockpit__selectall input { width: 18px; height: 18px; accent-color: var(--accent); }
   .cockpit__scroll { overflow-x: hidden; max-height: none; margin-top: 4px; }
   .cockpit__table, .cockpit__table tbody { display: block; }
   .cockpit__table thead { display: none; }
-  .cockpit__table tr { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 12px; row-gap: 6px; padding: 16px 4px; border-top: 1px solid var(--line); }
-  .cockpit__table td, .cockpit__table tr.is-selected td { display: block; padding: 0; border: 0; background: none; white-space: normal; grid-column: 2; font-size: 0.92rem; }
-  .cockpit__table tr.is-selected { background: #f3f6fb; }
-  .cockpit__table td.cockpit__check { grid-column: 1; grid-row: 1; width: auto; }
+  .cockpit__table tr { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 6px; padding: 16px 4px; border-top: 1px solid var(--line); }
+  .cockpit__table td { display: block; padding: 0; border: 0; background: none; white-space: normal; font-size: 0.92rem; }
   .cockpit__table td[data-label]::before { content: attr(data-label); display: block; color: var(--muted); font-size: 0.75rem; }
   .cockpit__table td.cockpit__end { text-align: left; width: auto; margin-top: 4px; }
   .cockpit__table td.cockpit__end .cockpit__action { width: 100%; padding: 10px 12px; }
   .cockpit__person strong { font-size: 1rem; }
 }
 
-/* topbar on a phone: logo, nav button and language switch have to fit in one row */
-@media (max-width: 480px) {
+/* tabs under the hero text: phone only */
+.hero__tabs { display: none; }
+@media (max-width: 560px) {
+  .topbar__nav { display: none; }
+  .hero__tabs { display: flex; gap: 28px; margin-top: 18px; border-bottom: 1px solid rgba(0, 46, 108, 0.18); }
+  .hero__tabs button { position: relative; border: 0; background: none; padding: 10px 0 12px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .hero__count { display: inline-block; min-width: 22px; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: rgba(0, 46, 108, 0.12); color: var(--muted); font-size: 0.75rem; font-weight: 700; text-align: center; }
+  .hero__tabs button.is-on { color: var(--text); font-weight: 700; }
+  .hero__tabs button.is-on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--text); }
   .topbar { gap: 8px; }
-  .topbar__nav { margin-right: 0; padding: 5px 10px; font-size: 0.85rem; white-space: nowrap; }
   .lang button { padding: 5px 9px; }
   .brand { gap: 6px; min-width: 0; }
 }
@@ -621,10 +613,12 @@ h3 { margin: 0 0 4px; }
 .modal__box h3 { margin: 0 0 8px; }
 .modal__box p { margin: 0 0 20px; color: var(--text); }
 .modal__box p strong { font-weight: 800; }
+.modal__error { padding: 8px 12px; border-radius: 8px; background: #fdecec; color: var(--bad); font-size: 0.85rem; overflow-wrap: anywhere; }
 .modal__actions { display: flex; justify-content: flex-end; gap: 12px; }
 .modal__danger { background: var(--bad); }
 /* the dialog buttons do not react to hover or press */
 .modal .btn:hover:not(:disabled), .modal .btn:active:not(:disabled) { transform: none; box-shadow: none; }
+.modal .btn:disabled { opacity: 0.6; cursor: default; }
 .modal .btn--ghost:hover:not(:disabled), .modal .btn--ghost:active:not(:disabled) { background: transparent; }
 .modal .modal__danger:hover:not(:disabled), .modal .modal__danger:active:not(:disabled) { background: var(--bad); }
 @media (max-width: 480px) { .modal__actions { flex-direction: column-reverse; } .modal__actions .btn { width: 100%; } }

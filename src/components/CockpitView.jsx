@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../i18n.js';
-import { fetchCockpit } from '../api/verifyApi.js';
+import { cancelContract } from '../api/verifyApi.js';
 
 const PAGE_SIZE = 20;
 
@@ -27,24 +27,16 @@ const SearchIcon = () => (
   </svg>
 );
 
-export default function CockpitView() {
+// state = { loading, error, data } of the account list; the app loads it (the tab shows its count)
+export default function CockpitView({ state, onCancelled }) {
   const { t, lang } = useI18n();
-  const [state, setState] = useState({ loading: true, error: '', data: null });
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState(() => new Set());
-  const [confirm, setConfirm] = useState(null); // { ids } of the accounts to deregister
+  const [confirm, setConfirm] = useState(null); // id of the account whose contract is to be cancelled
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState(''); // message of a failed cancellation, shown in the dialog
+  const [notice, setNotice] = useState(''); // "contract cancelled" message above the list
   const scrollRef = useRef(null);
-
-  useEffect(() => {
-    let stopped = false;
-    fetchCockpit()
-      .then((data) => !stopped && setState({ loading: false, error: '', data }))
-      .catch((e) => !stopped && setState({ loading: false, error: e?.message || 'Error', data: null }));
-    return () => {
-      stopped = true;
-    };
-  }, []);
 
   const { loading, error, data } = state;
   const description = data ? codeNames[data.merkmalcode]?.[lang] || data.beschreibung || '' : '';
@@ -64,29 +56,42 @@ export default function CockpitView() {
   const current = Math.min(page, pages);
   const visible = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  const pageIds = visible.map((r) => r.id);
-  const allOnPage = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
-  const someOnPage = pageIds.some((id) => selected.has(id));
+  const closeDialog = () => {
+    if (busy) return;
+    setConfirm(null);
+    setFailure('');
+  };
 
-  const toggle = (id) =>
-    setSelected((s) => {
-      const next = new Set(s);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
-  const togglePage = () =>
-    setSelected((s) => {
-      const next = new Set(s);
-      pageIds.forEach((id) => (allOnPage ? next.delete(id) : next.add(id)));
-      return next;
-    });
+  const cancel = async () => {
+    const row = data.rows[confirm];
+    setBusy(true);
+    setFailure('');
+    try {
+      await cancelContract(row.partner);
+      setConfirm(null);
+      setNotice(t.cockpit.cancelled(person(row)));
+      onCancelled?.(); // the list is loaded again, the cancelled contract is gone from it
+    } catch (e) {
+      setFailure(e?.message || 'Error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // the notice goes away by itself
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = setTimeout(() => setNotice(''), 6000);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   useEffect(() => {
-    if (!confirm) return undefined;
-    const onKey = (e) => e.key === 'Escape' && setConfirm(null);
+    if (confirm === null) return undefined;
+    const onKey = (e) => e.key === 'Escape' && closeDialog();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [confirm]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirm, busy]);
 
   // a new page starts at the top of the list, scrolled there smoothly
   useEffect(() => {
@@ -102,9 +107,10 @@ export default function CockpitView() {
         </h2>
       </div>
 
+      {notice && <p className="cockpit__notice" role="status">{notice}</p>}
+
       <div className="card cockpit__card">
-        <div className="cockpit__toolbar">
-          <label className="cockpit__search">
+        <label className="cockpit__search">
           <SearchIcon />
           <input
             value={query}
@@ -115,39 +121,17 @@ export default function CockpitView() {
             placeholder={t.cockpit.search}
           />
         </label>
-          <button type="button" className="cockpit__action cockpit__bulk" disabled={selected.size === 0} onClick={() => setConfirm({ ids: [...selected] })}>
-            {t.cockpit.deregister}{selected.size > 0 ? ` (${selected.size})` : ''}
-          </button>
-        </div>
 
-        {loading && <p className="muted cockpit__note" role="status">{t.cockpit.loading}</p>}
+        {loading && !data && <p className="muted cockpit__note" role="status">{t.cockpit.loading}</p>}
         {error && <p className="result__detail">{error}</p>}
         {data && rows.length === 0 && <p className="muted cockpit__note">{t.cockpit.empty}</p>}
 
         {visible.length > 0 && (
           <>
-            <label className="cockpit__selectall">
-              <input
-                type="checkbox"
-                checked={allOnPage}
-                ref={(el) => el && (el.indeterminate = someOnPage && !allOnPage)}
-                onChange={togglePage}
-              />
-              {t.cockpit.selectPage}
-            </label>
             <div className="cockpit__scroll" ref={scrollRef}>
               <table className="cockpit__table">
                 <thead>
                   <tr>
-                    <th className="cockpit__check">
-                      <input
-                        type="checkbox"
-                        checked={allOnPage}
-                        ref={(el) => el && (el.indeterminate = someOnPage && !allOnPage)}
-                        onChange={togglePage}
-                        aria-label={t.cockpit.selectPage}
-                      />
-                    </th>
                     <th>{t.cockpit.columns.person}</th>
                     <th>{t.cockpit.columns.geburtsdatum}</th>
                     <th>{t.cockpit.columns.merkmalcode}</th>
@@ -157,15 +141,7 @@ export default function CockpitView() {
                 </thead>
                 <tbody>
                   {visible.map((r) => (
-                    <tr key={r.id} className={confirm?.ids.includes(r.id) ? 'is-pending' : selected.has(r.id) ? 'is-selected' : ''}>
-                      <td className="cockpit__check">
-                        <input
-                          type="checkbox"
-                          checked={selected.has(r.id)}
-                          onChange={() => toggle(r.id)}
-                          aria-label={t.cockpit.selectRow}
-                        />
-                      </td>
+                    <tr key={r.id} className={confirm === r.id ? 'is-pending' : ''}>
                       <td>
                         <span className="cockpit__person">
                           <span>
@@ -183,7 +159,7 @@ export default function CockpitView() {
                       </td>
                       <td data-label={t.cockpit.columns.adresse}>{address(r) || '–'}</td>
                       <td className="cockpit__end">
-                        <button type="button" className="cockpit__action" onClick={() => setConfirm({ ids: [r.id] })}>
+                        <button type="button" className="cockpit__action" onClick={() => setConfirm(r.id)}>
                           {t.cockpit.deregister}
                         </button>
                       </td>
@@ -205,8 +181,8 @@ export default function CockpitView() {
         )}
       </div>
 
-      {confirm && (
-        <div className="modal" onMouseDown={(e) => e.target === e.currentTarget && setConfirm(null)}>
+      {confirm !== null && (
+        <div className="modal" onMouseDown={(e) => e.target === e.currentTarget && closeDialog()}>
           <div className="modal__box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
             <div className="modal__body">
               <span className="modal__icon" aria-hidden="true">
@@ -223,23 +199,17 @@ export default function CockpitView() {
                 </svg>
               </span>
               <div>
-                <h3 id="confirm-title">
-                  {t.cockpit.confirmTitle}
-                </h3>
-                {confirm.ids.length === 1 ? (
-                  <p>{t.cockpit.confirmOne[0]}<strong>{person(data.rows[confirm.ids[0]])}</strong>{t.cockpit.confirmOne[1]}</p>
-                ) : (
-                  <p>{t.cockpit.confirmMany(confirm.ids.length)}</p>
-                )}
+                <h3 id="confirm-title">{t.cockpit.confirmTitle}</h3>
+                <p>{t.cockpit.confirmOne[0]}<strong>{person(data.rows[confirm])}</strong>{t.cockpit.confirmOne[1]}</p>
+                {failure && <p className="modal__error" role="alert">{failure}</p>}
               </div>
             </div>
             <div className="modal__actions">
-              <button type="button" className="btn btn--ghost" onClick={() => setConfirm(null)} autoFocus>
+              <button type="button" className="btn btn--ghost" onClick={closeDialog} disabled={busy} autoFocus>
                 {t.cockpit.cancel}
               </button>
-              {/* the deregistration itself is not wired up yet: confirming just closes the dialog */}
-              <button type="button" className="btn modal__danger" onClick={() => setConfirm(null)}>
-                {t.cockpit.deregister}
+              <button type="button" className="btn modal__danger" onClick={cancel} disabled={busy}>
+                {busy ? t.cockpit.cancelling : t.cockpit.deregister}
               </button>
             </div>
           </div>

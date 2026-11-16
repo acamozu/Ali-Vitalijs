@@ -96,6 +96,22 @@ export async function fetchCockpit() {
   return { merkmalcode: data.merkmalcode, beschreibung: data.beschreibung ?? '', rows: data.rows ?? [] };
 }
 
+// "Vertrag kündigen": EK Erledigungsmeldung for the business partner (SAP: ZCL_S2S_SIM_EK_ABMELDUNG).
+export async function cancelContract(partner) {
+  if (USE_MOCK) {
+    await new Promise((r) => setTimeout(r, 700));
+    return { success: true };
+  }
+  const res = await fetch('/sap/zesm_web_check?action=abmelden', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Access-Code': storedAccessCode() },
+    body: JSON.stringify({ partner }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error ?? `Backend returned ${res.status}`);
+  return data;
+}
+
 // Current status of an earlier check (an officer may have decided in the BP cockpit since).
 // Returns null while the backend cannot tell; the caller just asks again.
 export async function fetchStatus(requestId) {

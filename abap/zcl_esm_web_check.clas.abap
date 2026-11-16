@@ -60,16 +60,18 @@ CLASS zcl_esm_web_check IMPLEMENTATION.
                plz          TYPE /s2ssws/db_in-plz,
                ort          TYPE /s2ssws/db_in-ort,
                land         TYPE /s2ssws/db_in-land,
+               partner      TYPE /s2ssws/db_partn-partner,
              END OF ty_acc.
       DATA lt_all TYPE STANDARD TABLE OF ty_acc WITH EMPTY KEY.
       DATA lt_out TYPE STANDARD TABLE OF ty_acc WITH EMPTY KEY.
       DATA lv_code TYPE /s2ssws/db_in-merkmalcode VALUE 'EK'.
       DO 2 TIMES.
-        SELECT merkmalcode, meldeart, vorname, nachname, geschlecht, geburtsdatum, geburtsort,
-               strasse, plz, ort, land
-          FROM /s2ssws/db_in
-          WHERE merkmalcode = @lv_code
-          ORDER BY crdat DESCENDING, crtim DESCENDING
+        SELECT i~merkmalcode, i~meldeart, i~vorname, i~nachname, i~geschlecht, i~geburtsdatum, i~geburtsort,
+               i~strasse, i~plz, i~ort, i~land, p~partner
+          FROM /s2ssws/db_in AS i
+          LEFT OUTER JOIN /s2ssws/db_partn AS p ON p~daten_guid = i~daten_guid
+          WHERE i~merkmalcode = @lv_code
+          ORDER BY i~crdat DESCENDING, i~crtim DESCENDING
           INTO CORRESPONDING FIELDS OF TABLE @lt_all
           UP TO 5000 ROWS.
         lt_out = lt_all.
@@ -105,6 +107,53 @@ CLASS zcl_esm_web_check IMPLEMENTATION.
         iv_code   = 200
         iv_reason = `OK`
         iv_json   = /ui2/cl_json=>serialize( data = ls_cockpit pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
+      RETURN.
+    ENDIF.
+
+    " POST ?action=abmelden {"partner":"..."} : Vertrag kündigen = EK Erledigungsmeldung for the business
+    " partner (class ZCL_S2S_SIM_EK_ABMELDUNG, test system A2H). Only partners that have an open EK
+    " Neumeldung (= are in the Konten list) can be cancelled.
+    IF server->request->get_method( ) = 'POST' AND server->request->get_form_field( 'action' ) = 'abmelden'.
+      TYPES: BEGIN OF ty_cancel,
+               partner TYPE string,
+             END OF ty_cancel.
+      DATA ls_cancel TYPE ty_cancel.
+      TRY.
+          /ui2/cl_json=>deserialize(
+            EXPORTING json = server->request->get_cdata( )
+            CHANGING  data = ls_cancel ).
+        CATCH cx_root.
+          respond_error( io_server = server iv_code = 400 iv_reason = `Bad Request` iv_text = `Body is not valid JSON.` ).
+          RETURN.
+      ENDTRY.
+      IF ls_cancel-partner IS INITIAL OR ls_cancel-partner CN '0123456789' OR strlen( ls_cancel-partner ) > 10.
+        respond_error( io_server = server iv_code = 400 iv_reason = `Bad Request` iv_text = `partner is required.` ).
+        RETURN.
+      ENDIF.
+      DATA(lv_partner) = CONV bu_partner( |{ ls_cancel-partner ALPHA = IN }| ).
+      SELECT SINGLE i~daten_guid
+        FROM /s2ssws/db_in AS i
+        INNER JOIN /s2ssws/db_partn AS p ON p~daten_guid = i~daten_guid
+        WHERE p~partner = @lv_partner
+          AND i~merkmalcode = 'EK'
+          AND i~meldeart = 'Neumeldung'
+        INTO @DATA(lv_open_guid).
+      IF sy-subrc <> 0.
+        respond_error( io_server = server iv_code = 404 iv_reason = `Not Found` iv_text = `No open EK contract for this partner.` ).
+        RETURN.
+      ENDIF.
+      DATA(ls_cancelled) = zcl_s2s_sim_ek_abmeldung=>abmelden( iv_partner = lv_partner ).
+      IF ls_cancelled-success = abap_false.
+        respond_error(
+          io_server = server iv_code = 409 iv_reason = `Conflict`
+          iv_text   = COND #( WHEN ls_cancelled-message IS INITIAL THEN `Cancellation failed.` ELSE ls_cancelled-message ) ).
+        RETURN.
+      ENDIF.
+      respond(
+        io_server = server
+        iv_code   = 200
+        iv_reason = `OK`
+        iv_json   = /ui2/cl_json=>serialize( data = ls_cancelled pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
       RETURN.
     ENDIF.
 

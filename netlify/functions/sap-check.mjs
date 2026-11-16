@@ -52,6 +52,10 @@ export default async (request) => {
     if (query.get('cockpit') === '1') url.searchParams.set('cockpit', '1');
     else url.searchParams.set('request_id', query.get('request_id') ?? '');
   }
+  // POST ?action=abmelden = cancel the contract of one partner; any other POST is the verification
+  if (request.method === 'POST' && new URL(request.url).searchParams.get('action') === 'abmelden') {
+    url.searchParams.set('action', 'abmelden');
+  }
 
   try {
     const sap = await call(request.method, url, `${SAP_USER}:${SAP_PASSWORD}`, request.method === 'POST' ? await request.text() : '');
