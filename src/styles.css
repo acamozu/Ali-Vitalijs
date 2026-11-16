@@ -84,6 +84,44 @@ body {
 .brand__name { font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--green); }
 .brand__name span { font-weight: 400; }
 
+.topbar__nav { margin-left: auto; margin-right: 12px; border: 1px solid var(--accent); border-radius: 10px; background: transparent; padding: 6px 16px; cursor: pointer; font: inherit; font-weight: 600; color: var(--accent); }
+.topbar__nav:hover { background: var(--accent); color: var(--accent-text); }
+.cockpit__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+.cockpit h2 { margin: 0 0 4px; }
+.cockpit__count { color: var(--muted); font-weight: 500; }
+.cockpit__card {
+  padding: 16px;
+  /* same lifted look as the search card: shadow on the top edge as well as the bottom */
+  box-shadow: 0 -6px 16px rgba(0, 46, 108, 0.07), 0 4px 10px rgba(0, 46, 108, 0.08), 0 18px 40px rgba(0, 46, 108, 0.14);
+}
+.cockpit__toolbar { display: flex; align-items: center; gap: 12px; }
+.cockpit__toolbar .cockpit__search { flex: 1; min-width: 0; }
+.cockpit__bulk { padding: 10px 16px; font-size: 0.9rem; white-space: nowrap; }
+.cockpit__bulk:disabled { opacity: 0.4; cursor: default; }
+.cockpit__bulk:disabled:hover { background: transparent; color: var(--bad); }
+.cockpit__end { text-align: right; width: 1%; }
+.cockpit__check { width: 1%; padding-right: 0; }
+.cockpit__check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; vertical-align: middle; }
+.cockpit__table tr.is-pending td { background: #fdecec; }
+.cockpit__table tr.is-selected td { background: #f3f6fb; }
+.cockpit__search { display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); }
+.cockpit__search:focus-within { outline: 2px solid var(--accent); border-color: transparent; color: var(--accent); }
+.cockpit__search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 12px 0; font: inherit; color: var(--text); }
+.cockpit__note { padding: 20px 4px 4px; }
+.cockpit__scroll { overflow: auto; max-height: min(62vh, 680px); margin-top: 12px; }
+.cockpit__table { width: 100%; border-collapse: collapse; }
+.cockpit__table th { padding: 14px 12px; text-align: left; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); white-space: nowrap; position: sticky; top: 0; background: var(--card, #fff); }
+.cockpit__table td { padding: 14px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.cockpit__table tbody tr:last-child td { border-bottom: 0; }
+.cockpit__sub { display: block; margin-top: 2px; color: var(--muted); font-size: 0.8rem; }
+.cockpit__sort { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: inherit; cursor: pointer; }
+.cockpit__person { display: inline-flex; align-items: center; gap: 14px; }
+.cockpit__action { flex: none; border: 1px solid var(--bad); border-radius: 8px; background: transparent; padding: 6px 12px; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--bad); cursor: pointer; }
+.cockpit__action:hover { background: var(--bad); color: #fff; }
+.cockpit__pager { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+.cockpit__pager button { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 8px; background: transparent; font-size: 1.2rem; line-height: 1; cursor: pointer; color: var(--text); }
+.cockpit__pager button:disabled { opacity: 0.4; cursor: default; }
+.cockpit__badge { display: inline-block; padding: 2px 8px; border-radius: 6px; background: #e3f5ea; color: var(--ok); font-size: 0.85rem; font-weight: 600; }
 .lang { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .lang button { border: 0; background: transparent; padding: 6px 14px; cursor: pointer; font: inherit; color: var(--muted); }
 .lang button.is-on { background: var(--accent); color: var(--accent-text); }
@@ -448,8 +486,10 @@ h3 { margin: 0 0 4px; }
 .tariff { background: linear-gradient(180deg, var(--accent-soft) 0%, #fff 70%); }
 .tariff--popular { border-color: var(--accent); }
 /* Search card: raised like the tariff cards, its inputs are raised white fields on it */
+.form.card {
+  box-shadow: 0 -6px 16px rgba(0, 46, 108, 0.07), 0 4px 10px rgba(0, 46, 108, 0.08), 0 18px 40px rgba(0, 46, 108, 0.14);
+}
 .search.card {
-  background: linear-gradient(180deg, var(--accent-soft) 0%, #fff 70%);
   /* the top edge is lifted off the page just like the bottom edge */
   box-shadow: 0 -6px 16px rgba(0, 46, 108, 0.07), 0 4px 10px rgba(0, 46, 108, 0.08), 0 18px 40px rgba(0, 46, 108, 0.14);
 }
@@ -541,3 +581,50 @@ h3 { margin: 0 0 4px; }
   .usage__popover { width: 100%; }
   .tariff__price { justify-items: start; }
 }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Accounts on a phone: no wide table, one card per account (like the product list pattern) */
+.cockpit__selectall { display: none; }
+@media (max-width: 720px) {
+  .cockpit__toolbar { flex-direction: column; align-items: stretch; }
+  .cockpit__bulk { width: 100%; padding: 12px 16px; }
+  .cockpit__selectall { display: flex; align-items: center; gap: 12px; padding: 14px 4px 6px; color: var(--muted); font-size: 0.9rem; }
+  .cockpit__selectall input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .cockpit__scroll { overflow-x: hidden; max-height: none; margin-top: 4px; }
+  .cockpit__table, .cockpit__table tbody { display: block; }
+  .cockpit__table thead { display: none; }
+  .cockpit__table tr { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 12px; row-gap: 6px; padding: 16px 4px; border-top: 1px solid var(--line); }
+  .cockpit__table td, .cockpit__table tr.is-selected td { display: block; padding: 0; border: 0; background: none; white-space: normal; grid-column: 2; font-size: 0.92rem; }
+  .cockpit__table tr.is-selected { background: #f3f6fb; }
+  .cockpit__table td.cockpit__check { grid-column: 1; grid-row: 1; width: auto; }
+  .cockpit__table td[data-label]::before { content: attr(data-label); display: block; color: var(--muted); font-size: 0.75rem; }
+  .cockpit__table td.cockpit__end { text-align: left; width: auto; margin-top: 4px; }
+  .cockpit__table td.cockpit__end .cockpit__action { width: 100%; padding: 10px 12px; }
+  .cockpit__person strong { font-size: 1rem; }
+}
+
+/* topbar on a phone: logo, nav button and language switch have to fit in one row */
+@media (max-width: 480px) {
+  .topbar { gap: 8px; }
+  .topbar__nav { margin-right: 0; padding: 5px 10px; font-size: 0.85rem; white-space: nowrap; }
+  .lang button { padding: 5px 9px; }
+  .brand { gap: 6px; min-width: 0; }
+}
+
+/* confirmation dialog */
+.modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(15, 23, 42, 0.45); }
+.modal__box { width: min(440px, 100%); padding: 24px; border-radius: 16px; background: #fff; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); }
+.modal__body { display: flex; gap: 16px; align-items: flex-start; }
+.modal__icon { flex: none; display: block; width: 48px; height: 48px; filter: drop-shadow(0 3px 6px rgba(242, 154, 0, 0.35)); }
+.modal__icon svg { display: block; }
+.modal__box h3 { margin: 0 0 8px; }
+.modal__box p { margin: 0 0 20px; color: var(--text); }
+.modal__box p strong { font-weight: 800; }
+.modal__actions { display: flex; justify-content: flex-end; gap: 12px; }
+.modal__danger { background: var(--bad); }
+/* the dialog buttons do not react to hover or press */
+.modal .btn:hover:not(:disabled), .modal .btn:active:not(:disabled) { transform: none; box-shadow: none; }
+.modal .btn--ghost:hover:not(:disabled), .modal .btn--ghost:active:not(:disabled) { background: transparent; }
+.modal .modal__danger:hover:not(:disabled), .modal .modal__danger:active:not(:disabled) { background: var(--bad); }
+@media (max-width: 480px) { .modal__actions { flex-direction: column-reverse; } .modal__actions .btn { width: 100%; } }

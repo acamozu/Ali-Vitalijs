@@ -47,7 +47,11 @@ export default async (request) => {
   const url = new URL('/sap/zesm_web_check', SAP_HOST);
   if (SAP_CLIENT) url.searchParams.set('sap-client', SAP_CLIENT);
   // GET = status of an earlier check; only the request_id is passed on, nothing else from the query
-  if (request.method === 'GET') url.searchParams.set('request_id', new URL(request.url).searchParams.get('request_id') ?? '');
+  if (request.method === 'GET') {
+    const query = new URL(request.url).searchParams;
+    if (query.get('cockpit') === '1') url.searchParams.set('cockpit', '1');
+    else url.searchParams.set('request_id', query.get('request_id') ?? '');
+  }
 
   try {
     const sap = await call(request.method, url, `${SAP_USER}:${SAP_PASSWORD}`, request.method === 'POST' ? await request.text() : '');

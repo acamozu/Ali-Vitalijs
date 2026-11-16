@@ -5,6 +5,7 @@ import SearchPanel from './components/SearchPanel.jsx';
 import TariffList from './components/TariffList.jsx';
 import StepForm from './components/StepForm.jsx';
 import ResultView from './components/ResultView.jsx';
+import CockpitView from './components/CockpitView.jsx';
 import { LinkedInIcon, WebIcon } from './components/Icons.jsx';
 import logo from './assets/alseda-logo.png';
 
@@ -104,6 +105,16 @@ export default function App() {
           </svg>
           <span className="brand__name">Öko<span>Fest</span></span>
         </span>
+        {view !== 'cockpit' && (
+          <button className="topbar__nav" type="button" onClick={() => go('cockpit')}>
+            {i18n.t.cockpit.button}
+          </button>
+        )}
+        {view === 'cockpit' && (
+          <button className="topbar__nav" type="button" onClick={() => go('search')}>
+            {i18n.t.cockpit.calculator}
+          </button>
+        )}
         <div className="lang" role="group" aria-label="Language">
           {['de', 'en'].map((l) => (
             <button key={l} className={l === lang ? 'is-on' : ''} onClick={() => i18n.setLang(l)}>
@@ -138,6 +149,7 @@ export default function App() {
             onSelect={(tf) => go('form', () => setTariff(tf))}
           />
         )}
+        {view === 'cockpit' && <CockpitView />}
         {view === 'form' && (
           <StepForm tariff={tariff} search={search} busy={busy} onSubmit={submit} onBack={() => go('tariffs')} />
         )}

@@ -43,6 +43,71 @@ CLASS zcl_esm_web_check IMPLEMENTATION.
 
     " GET ?request_id=... : current status of an earlier check (the web app polls this while an
     " officer decides in the BP cockpit). Only requests that came from this web app are readable.
+    IF server->request->get_method( ) = 'GET' AND server->request->get_form_field( 'cockpit' ) = '1'.
+      " Accounts page of the web app: Vertragsmeldungen of /S2SSWS/DB_IN.
+      " EK: open accounts only = Meldeart Neumeldung, minus the persons that already have an
+      " Erledigungsmeldung (contract ended) or Löschungsmeldung (contract deleted): those are signed out.
+      " Nothing for EK -> AG as it is.
+      TYPES: BEGIN OF ty_acc,
+               merkmalcode  TYPE /s2ssws/db_in-merkmalcode,
+               meldeart     TYPE /s2ssws/db_in-meldeart,
+               vorname      TYPE /s2ssws/db_in-vorname,
+               nachname     TYPE /s2ssws/db_in-nachname,
+               geschlecht   TYPE /s2ssws/db_in-geschlecht,
+               geburtsdatum TYPE /s2ssws/db_in-geburtsdatum,
+               geburtsort   TYPE /s2ssws/db_in-geburtsort,
+               strasse      TYPE /s2ssws/db_in-strasse,
+               plz          TYPE /s2ssws/db_in-plz,
+               ort          TYPE /s2ssws/db_in-ort,
+               land         TYPE /s2ssws/db_in-land,
+             END OF ty_acc.
+      DATA lt_all TYPE STANDARD TABLE OF ty_acc WITH EMPTY KEY.
+      DATA lt_out TYPE STANDARD TABLE OF ty_acc WITH EMPTY KEY.
+      DATA lv_code TYPE /s2ssws/db_in-merkmalcode VALUE 'EK'.
+      DO 2 TIMES.
+        SELECT merkmalcode, meldeart, vorname, nachname, geschlecht, geburtsdatum, geburtsort,
+               strasse, plz, ort, land
+          FROM /s2ssws/db_in
+          WHERE merkmalcode = @lv_code
+          ORDER BY crdat DESCENDING, crtim DESCENDING
+          INTO CORRESPONDING FIELDS OF TABLE @lt_all
+          UP TO 5000 ROWS.
+        lt_out = lt_all.
+        IF lv_code = 'EK'.
+          DELETE lt_out WHERE meldeart <> 'Neumeldung'.
+          " same person (name + birth date) = same account; there is no account number yet
+          LOOP AT lt_all INTO DATA(ls_closed) WHERE meldeart = 'Erledigungsmeldung' OR meldeart = 'Löschungsmeldung'.
+            DELETE lt_out WHERE vorname = ls_closed-vorname
+                            AND nachname = ls_closed-nachname
+                            AND geburtsdatum = ls_closed-geburtsdatum.
+          ENDLOOP.
+        ENDIF.
+        IF lt_out IS NOT INITIAL.
+          EXIT.
+        ENDIF.
+        lv_code = 'AG'.
+      ENDDO.
+      IF lines( lt_out ) > 200.
+        DELETE lt_out FROM 201.
+      ENDIF.
+      " text of the code, if the OUT table knows it (EK is not in it: the web app has the text)
+      SELECT SINGLE beschreibung FROM /s2ssws/db_out_d WHERE merkmalcode = @lv_code INTO @DATA(lv_desc).
+      DATA: BEGIN OF ls_cockpit,
+              merkmalcode  TYPE string,
+              beschreibung TYPE string,
+              rows         TYPE REF TO data,
+            END OF ls_cockpit.
+      ls_cockpit-merkmalcode = lv_code.
+      ls_cockpit-beschreibung = lv_desc.
+      ls_cockpit-rows = REF #( lt_out ).
+      respond(
+        io_server = server
+        iv_code   = 200
+        iv_reason = `OK`
+        iv_json   = /ui2/cl_json=>serialize( data = ls_cockpit pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
+      RETURN.
+    ENDIF.
+
     IF server->request->get_method( ) = 'GET'.
       DATA lv_request_id TYPE /aesm/dte_request_id.
       DATA(lv_param) = server->request->get_form_field( 'request_id' ).

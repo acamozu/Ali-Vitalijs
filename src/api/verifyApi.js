@@ -79,6 +79,23 @@ async function sapVerify(partner, accessCode = storedAccessCode()) {
   return { status: data.status, techStatus: data.techStatus, requestId: data.requestId };
 }
 
+// Cockpit button: entries of the OUT table with Merkmalcode EK, else AG. Returns { merkmalcode, rows }.
+export async function fetchCockpit() {
+  if (USE_MOCK) {
+    await new Promise((r) => setTimeout(r, 400));
+    return {
+      merkmalcode: 'AG',
+      rows: [{ vorname: 'Max', nachname: 'Mustermann', geschlecht: 'M', geburtsdatum: '1977-06-07', strasse: 'Hanauer Landstraße 111', plz: '60314', ort: 'Frankfurt am Main', land: 'DE', merkmalcode: 'EK', kontonummer: '1234567', datum: '2025-12-03' }],
+    };
+  }
+  const res = await fetch('/sap/zesm_web_check?cockpit=1', {
+    headers: { Accept: 'application/json', 'X-Access-Code': storedAccessCode() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error ?? `Backend returned ${res.status}`);
+  return { merkmalcode: data.merkmalcode, beschreibung: data.beschreibung ?? '', rows: data.rows ?? [] };
+}
+
 // Current status of an earlier check (an officer may have decided in the BP cockpit since).
 // Returns null while the backend cannot tell; the caller just asks again.
 export async function fetchStatus(requestId) {
