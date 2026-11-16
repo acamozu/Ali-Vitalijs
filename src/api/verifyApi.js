@@ -76,5 +76,21 @@ async function sapVerify(partner, accessCode = storedAccessCode()) {
     return sapVerify(partner, code);
   }
   if (!res.ok) throw new Error(data.error ?? `Backend returned ${res.status}`);
-  return { status: data.status, techStatus: data.techStatus };
+  return { status: data.status, techStatus: data.techStatus, requestId: data.requestId };
+}
+
+// Current status of an earlier check (an officer may have decided in the BP cockpit since).
+// Returns null while the backend cannot tell; the caller just asks again.
+export async function fetchStatus(requestId) {
+  if (USE_MOCK || !requestId) return null;
+  try {
+    const res = await fetch(`/sap/zesm_web_check?request_id=${encodeURIComponent(requestId)}`, {
+      headers: { Accept: 'application/json', 'X-Access-Code': storedAccessCode() },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { status: data.status, techStatus: data.techStatus, requestId };
+  } catch {
+    return null;
+  }
 }

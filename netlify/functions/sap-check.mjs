@@ -6,12 +6,12 @@ import https from 'node:https';
 const json = (status, data) =>
   new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 
-function post(url, auth, body) {
+function call(method, url, auth, body = '') {
   return new Promise((resolve, reject) => {
     const req = https.request(
       url,
       {
-        method: 'POST',
+        method,
         auth,
         rejectUnauthorized: false, // the A2H certificate is expired, same as secure: false in vite.config.js
         timeout: 25000,
@@ -35,7 +35,7 @@ function post(url, auth, body) {
 }
 
 export default async (request) => {
-  if (request.method !== 'POST') return json(405, { error: 'Use POST.' });
+  if (request.method !== 'POST' && request.method !== 'GET') return json(405, { error: 'Use GET or POST.' });
 
   const { SAP_HOST, SAP_USER, SAP_PASSWORD, SAP_CLIENT, ACCESS_CODE } = process.env;
   if (!SAP_HOST || !SAP_USER || !SAP_PASSWORD) return json(500, { error: 'SAP connection is not configured.' });
@@ -46,9 +46,11 @@ export default async (request) => {
 
   const url = new URL('/sap/zesm_web_check', SAP_HOST);
   if (SAP_CLIENT) url.searchParams.set('sap-client', SAP_CLIENT);
+  // GET = status of an earlier check; only the request_id is passed on, nothing else from the query
+  if (request.method === 'GET') url.searchParams.set('request_id', new URL(request.url).searchParams.get('request_id') ?? '');
 
   try {
-    const sap = await post(url, `${SAP_USER}:${SAP_PASSWORD}`, await request.text());
+    const sap = await call(request.method, url, `${SAP_USER}:${SAP_PASSWORD}`, request.method === 'POST' ? await request.text() : '');
     // The handler answers JSON; anything else (e.g. an SAP error page) becomes a short error
     try {
       return json(sap.status, JSON.parse(sap.body));

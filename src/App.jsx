@@ -142,7 +142,7 @@ export default function App() {
           <StepForm tariff={tariff} search={search} busy={busy} onSubmit={submit} onBack={() => go('tariffs')} />
         )}
         {view === 'result' && (
-          <ResultView result={result} error={error} busy={busy} onRetry={() => submit(lastForm)} onRestart={restart} />
+          <ResultView result={result} error={error} busy={busy} onRetry={() => submit(lastForm)} onRestart={restart} onUpdate={setResult} />
         )}
       </main>
       <footer className="footer">

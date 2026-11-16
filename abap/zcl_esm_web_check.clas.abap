@@ -11,6 +11,12 @@ CLASS zcl_esm_web_check DEFINITION
              error TYPE string,
            END OF ty_error.
 
+    TYPES: BEGIN OF ty_answer,
+             status      TYPE /aesm/dte_fl_status,
+             tech_status TYPE /aesm/dte_fl_tech_status,
+             request_id  TYPE /aesm/dte_request_id,
+           END OF ty_answer.
+
     METHODS respond
       IMPORTING
         io_server TYPE REF TO if_http_server
@@ -35,8 +41,37 @@ CLASS zcl_esm_web_check IMPLEMENTATION.
     DATA ls_status  TYPE /aesm/str_fl_status.
     DATA lt_return  TYPE STANDARD TABLE OF bapiret2 WITH EMPTY KEY.
 
+    " GET ?request_id=... : current status of an earlier check (the web app polls this while an
+    " officer decides in the BP cockpit). Only requests that came from this web app are readable.
+    IF server->request->get_method( ) = 'GET'.
+      DATA lv_request_id TYPE /aesm/dte_request_id.
+      DATA(lv_param) = server->request->get_form_field( 'request_id' ).
+      IF lv_param IS INITIAL OR lv_param CN '0123456789'.
+        respond_error( io_server = server iv_code = 400 iv_reason = `Bad Request` iv_text = `request_id is required.` ).
+        RETURN.
+      ENDIF.
+      lv_request_id = lv_param.
+      SELECT SINGLE status, tech_status
+        FROM /aesm/db_flwcntr
+        WHERE request_id = @lv_request_id
+          AND external_id = 'WEBAPP'
+        INTO @DATA(ls_current).
+      IF sy-subrc <> 0.
+        respond_error( io_server = server iv_code = 404 iv_reason = `Not Found` iv_text = `Unknown request_id.` ).
+        RETURN.
+      ENDIF.
+      respond(
+        io_server = server
+        iv_code   = 200
+        iv_reason = `OK`
+        iv_json   = /ui2/cl_json=>serialize(
+                      data        = VALUE ty_answer( status = ls_current-status tech_status = ls_current-tech_status request_id = lv_param )
+                      pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
+      RETURN.
+    ENDIF.
+
     IF server->request->get_method( ) <> 'POST'.
-      respond_error( io_server = server iv_code = 405 iv_reason = `Method Not Allowed` iv_text = `Use POST.` ).
+      respond_error( io_server = server iv_code = 405 iv_reason = `Method Not Allowed` iv_text = `Use GET or POST.` ).
       RETURN.
     ENDIF.
 
@@ -105,11 +140,25 @@ CLASS zcl_esm_web_check IMPLEMENTATION.
     " Safety: make sure the DB_FLWCNTR record written by the check is persisted.
     COMMIT WORK AND WAIT.
 
+    " The FM does not return the id of the flow record it wrote. Take the newest record of this
+    " web app for the same name; the app polls its status with it. Empty = the app does not poll.
+    SELECT request_id
+      FROM /aesm/db_flwcntr
+      WHERE external_id = 'WEBAPP'
+        AND firstname   = @ls_partner-firstname
+        AND lastname    = @ls_partner-lastname
+      ORDER BY request_id DESCENDING
+      INTO @DATA(lv_new_id)
+      UP TO 1 ROWS.
+    ENDSELECT.
+
     respond(
       io_server = server
       iv_code   = 200
       iv_reason = `OK`
-      iv_json   = /ui2/cl_json=>serialize( data = ls_status pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
+      iv_json   = /ui2/cl_json=>serialize(
+                    data        = VALUE ty_answer( status = ls_status-status tech_status = ls_status-tech_status request_id = lv_new_id )
+                    pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
   ENDMETHOD.
 
 

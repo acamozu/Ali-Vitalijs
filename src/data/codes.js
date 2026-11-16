@@ -33,11 +33,14 @@ export const countries = [
 ];
 
 // Flow control status (/AESM/DOM_FL_STATUS) -> what the web app shows.
-// A verify call can only return 01, 02, 03 or 07; 04/05/06/08 are set later by the officer in the cockpit.
+// A verify call can only return 01, 02, 03 or 07; 04/05 are set later by the officer in the cockpit
+// ("Verdacht bestätigen" / "Verdacht widerlegen"), and the web app picks them up by polling.
 export const outcomeByStatus = {
   '01': 'approved',
   '03': 'approved',
+  '05': 'approved',
   '02': 'review',
+  '04': 'rejected',
   '07': 'rejected',
 };
 export const outcomeFor = (status) => outcomeByStatus[status] ?? 'review';
