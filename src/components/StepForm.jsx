@@ -11,7 +11,7 @@ const stepFields = [
   ['docType', 'docNumber', 'docCountry'],
 ];
 const optional = new Set([
-  'middlename', 'building', 'roomno',
+  'middlename', 'building', 'roomno', 'street', 'houseno',
   'birthdate', 'gender', 'nationality',
   'docType', 'docNumber', 'docCountry',
 ]);
