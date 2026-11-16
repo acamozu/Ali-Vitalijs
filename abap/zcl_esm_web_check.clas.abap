@@ -94,6 +94,13 @@ CLASS zcl_esm_web_check DEFINITION
         iv_code   TYPE i
         iv_reason TYPE string
         iv_text   TYPE string.
+
+    "! Check accepted (status 01, 03 or 05, shown as 'Angenommen' in the web app) and the partner is known:
+    "! simulated S2S Auskunft AE and EK Neumeldung for the partner (ZCL_S2S_SIM_EK_ABMELDUNG).
+    "! At most once per check: the S2S entries carry the Teilnehmerreferenz ESM- plus request id.
+    METHODS s2s_simulation
+      IMPORTING
+        iv_request_id TYPE /aesm/dte_request_id.
 ENDCLASS.
 
 
@@ -239,6 +246,8 @@ METHOD if_http_extension~handle_request.
         respond_error( io_server = server iv_code = 404 iv_reason = `Not Found` iv_text = `Unknown request_id.` ).
         RETURN.
       ENDIF.
+      " The officer accepted the case in the cockpit (03/05): S2S Auskunft and Meldung now
+      s2s_simulation( lv_request_id ).
       respond(
         io_server = server
         iv_code   = 200
@@ -290,6 +299,7 @@ METHOD if_http_extension~handle_request.
     DATA ls_monitoring_answer TYPE ty_response.
     IF answer_from_monitoring( EXPORTING is_partner  = ls_partner
                                IMPORTING es_response = ls_monitoring_answer ) EQ abap_true.
+      s2s_simulation( ls_monitoring_answer-request_id ).
       respond(
         io_server = server
         iv_code   = 200
@@ -367,6 +377,9 @@ METHOD if_http_extension~handle_request.
         ENDIF.
       ENDIF.
     ENDIF.
+
+    " Accepted right away (01): S2S Auskunft and Meldung for the partner
+    s2s_simulation( lv_new_id ).
 
     respond(
       io_server = server
@@ -705,6 +718,59 @@ METHOD if_http_extension~handle_request.
     es_response-bp_number       = condense( lv_bp_number ).
     es_response-from_monitoring = abap_true.
     rv_done = abap_true.
+  ENDMETHOD.
+
+
+  METHOD s2s_simulation.
+    CHECK iv_request_id IS NOT INITIAL.
+    SELECT SINGLE status, external_object, external_reference
+      FROM /aesm/db_flwcntr
+      WHERE request_id EQ @iv_request_id
+      INTO @DATA(ls_check).
+    " Accepted as in the web app (codes.js: 01, 03, 05) and assigned to a business partner
+    CHECK sy-subrc EQ 0
+      AND ( ls_check-status EQ '01' OR ls_check-status EQ '03' OR ls_check-status EQ '05' )
+      AND ls_check-external_object EQ /aesm/cl_partner_handler=>con_sap_partner_object
+      AND ls_check-external_reference IS NOT INITIAL.
+
+    " The web app polls every 3 seconds without waiting: only one call per check runs the simulation
+    DATA(lv_varkey) = CONV rstable-varkey( |{ sy-mandt }{ iv_request_id }| ).
+    CALL FUNCTION 'ENQUEUE_E_TABLE'
+      EXPORTING
+        mode_rstable   = 'E'
+        tabname        = '/AESM/DB_FLWCNTR'
+        varkey         = lv_varkey
+        _scope         = '1'
+      EXCEPTIONS
+        foreign_lock   = 1
+        system_failure = 2
+        OTHERS         = 3.
+    CHECK sy-subrc EQ 0.
+
+    DATA(lv_reference) = CONV /s2ssws/dte_teilnehmerreferenz( |ESM-{ iv_request_id ALPHA = OUT }| ).
+    CONDENSE lv_reference NO-GAPS.
+    SELECT SINGLE @abap_true FROM /s2ssws/db_out
+      WHERE teilnehmerreferenz EQ @lv_reference
+      INTO @DATA(lv_done).
+    IF lv_done EQ abap_false.
+      DATA(lv_partner) = CONV bu_partner( condense( ls_check-external_reference ) ).
+      lv_partner = |{ lv_partner ALPHA = IN }|.
+      TRY.
+          zcl_s2s_sim_ek_abmeldung=>auskunft( iv_partner            = lv_partner
+                                              iv_teilnehmerreferenz = lv_reference ).
+          zcl_s2s_sim_ek_abmeldung=>meldung( iv_partner            = lv_partner
+                                             iv_teilnehmerreferenz = lv_reference ).
+        CATCH cx_root ##CATCH_ALL ##NO_HANDLER.
+          " simulation only: the answer to the web app must not fail because of it
+      ENDTRY.
+    ENDIF.
+
+    CALL FUNCTION 'DEQUEUE_E_TABLE'
+      EXPORTING
+        mode_rstable = 'E'
+        tabname      = '/AESM/DB_FLWCNTR'
+        varkey       = lv_varkey
+        _scope       = '1'.
   ENDMETHOD.
 
 
