@@ -101,6 +101,14 @@ CLASS zcl_esm_web_check DEFINITION
     METHODS s2s_simulation
       IMPORTING
         iv_request_id TYPE /aesm/dte_request_id.
+
+    "! Case still open in the cockpit: new (N) or in process (P). 'Speichern' keeps it in process,
+    "! only 'Fertig' hands it over to release (R) and makes the officer's decision final.
+    METHODS is_case_open
+      IMPORTING
+        iv_process_status TYPE /aesm/db_flwcntr-process_status
+      RETURNING
+        VALUE(rv_open)    TYPE abap_bool.
 ENDCLASS.
 
 
@@ -237,7 +245,7 @@ METHOD if_http_extension~handle_request.
         RETURN.
       ENDIF.
       lv_request_id = lv_param.
-      SELECT SINGLE status, tech_status
+      SELECT SINGLE status, tech_status, process_status
         FROM /aesm/db_flwcntr
         WHERE request_id = @lv_request_id
           AND external_id = 'WEBAPP'
@@ -245,6 +253,11 @@ METHOD if_http_extension~handle_request.
       IF sy-subrc <> 0.
         respond_error( io_server = server iv_code = 404 iv_reason = `Not Found` iv_text = `Unknown request_id.` ).
         RETURN.
+      ENDIF.
+      " The officer's decision counts only after 'Fertig' (process status R). After 'Speichern' the case is
+      " still open (N/P): the web app keeps the result of the check itself (tech status, e.g. 02 = in review).
+      IF is_case_open( ls_current-process_status ) EQ abap_true.
+        ls_current-status = ls_current-tech_status.
       ENDIF.
       " The officer accepted the case in the cockpit (03/05): S2S Auskunft and Meldung now
       s2s_simulation( lv_request_id ).
@@ -723,13 +736,14 @@ METHOD if_http_extension~handle_request.
 
   METHOD s2s_simulation.
     CHECK iv_request_id IS NOT INITIAL.
-    SELECT SINGLE status, external_object, external_reference
+    SELECT SINGLE status, process_status, external_object, external_reference
       FROM /aesm/db_flwcntr
       WHERE request_id EQ @iv_request_id
       INTO @DATA(ls_check).
-    " Accepted as in the web app (codes.js: 01, 03, 05) and assigned to a business partner
+    " Accepted as in the web app (codes.js: 01, 03, 05), case finished and assigned to a business partner
     CHECK sy-subrc EQ 0
       AND ( ls_check-status EQ '01' OR ls_check-status EQ '03' OR ls_check-status EQ '05' )
+      AND is_case_open( ls_check-process_status ) EQ abap_false
       AND ls_check-external_object EQ /aesm/cl_partner_handler=>con_sap_partner_object
       AND ls_check-external_reference IS NOT INITIAL.
 
@@ -771,6 +785,11 @@ METHOD if_http_extension~handle_request.
         tabname      = '/AESM/DB_FLWCNTR'
         varkey       = lv_varkey
         _scope       = '1'.
+  ENDMETHOD.
+
+
+  METHOD is_case_open.
+    rv_open = xsdbool( iv_process_status EQ 'N' OR iv_process_status EQ 'P' ).
   ENDMETHOD.
 
 
