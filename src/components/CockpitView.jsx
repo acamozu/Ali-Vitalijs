@@ -14,8 +14,11 @@ const formatDate = (d) => {
 
 const address = (r) => [r.strasse, [r.plz, r.ort].filter(Boolean).join(' '), r.land].filter(Boolean).join(', ');
 
-// description of the feature codes the OUT table has no text for, as the Vertragsmeldung screen shows it
-const codeNames = { EK: 'Energieversorgungskonto' };
+// description of the feature codes in both languages (the OUT table has no text for EK and only a German one)
+const codeNames = {
+  EK: { de: 'Energieversorgungskonto', en: 'Energy supply account' },
+  AG: { de: 'Anfrage zum Girokonto', en: 'Current account enquiry' },
+};
 
 const SearchIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
@@ -25,7 +28,7 @@ const SearchIcon = () => (
 );
 
 export default function CockpitView() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [state, setState] = useState({ loading: true, error: '', data: null });
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -44,7 +47,7 @@ export default function CockpitView() {
   }, []);
 
   const { loading, error, data } = state;
-  const description = data ? data.beschreibung || codeNames[data.merkmalcode] || '' : '';
+  const description = data ? codeNames[data.merkmalcode]?.[lang] || data.beschreibung || '' : '';
 
   // the count in the title is the filtered one
   const rows = useMemo(() => {
