@@ -140,8 +140,7 @@ export default function App() {
         <div className="hero__inner">
           <div className="hero__text">
             <h1>{i18n.t.hero.title}</h1>
-            <p>{i18n.t.hero.text}</p>
-            {/* phone only: the two views as tabs under the hero text (on larger screens the button in the top bar does it) */}
+            {/* phone only: the two views as tabs under the hero title (on larger screens the button in the top bar does it) */}
             <div className="hero__tabs" role="tablist">
               <button type="button" role="tab" aria-selected={view !== 'cockpit'} className={view !== 'cockpit' ? 'is-on' : ''} onClick={() => view === 'cockpit' && go('search')}>
                 {i18n.t.cockpit.calculator}

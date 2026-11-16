@@ -5,7 +5,6 @@ export const messages = {
     brand: 'alseda Consulting',
     hero: {
       title: 'Tarif berechnen, Angaben prüfen lassen',
-      text: 'Bei der Bestellung werden Ihre Angaben von ESM-Lösung validiert.',
     },
     footer: { rights: 'Alle Rechte vorbehalten.' },
     date: {
@@ -132,7 +131,6 @@ export const messages = {
     brand: 'alseda Consulting',
     hero: {
       title: 'Calculate a tariff, have your details verified',
-      text: 'When you order, your details are validated by ESM solution.',
     },
     footer: { rights: 'All rights reserved.' },
     date: {
