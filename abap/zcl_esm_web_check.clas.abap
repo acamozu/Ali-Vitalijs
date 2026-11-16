@@ -154,12 +154,23 @@ METHOD if_http_extension~handle_request.
           UP TO 5000 ROWS.
         lt_out = lt_all.
         IF lv_code = 'EK'.
-          DELETE lt_out WHERE meldeart <> 'Neumeldung'.
-          " same person (name + birth date) = same account; there is no account number yet
-          LOOP AT lt_all INTO DATA(ls_closed) WHERE meldeart = 'Erledigungsmeldung' OR meldeart = 'Löschungsmeldung'.
-            DELETE lt_out WHERE vorname = ls_closed-vorname
-                            AND nachname = ls_closed-nachname
-                            AND geburtsdatum = ls_closed-geburtsdatum.
+          " One account per business partner (without partner: per name + birth date, there is no
+          " account number yet). The newest EK message of the account decides (lt_all is sorted newest
+          " first): Neumeldung = open; Erledigungs- or Löschungsmeldung = signed out. So a cancellation
+          " of one partner does not hide another partner with the same name, and a new Neumeldung after
+          " a cancellation shows the account again.
+          CLEAR lt_out.
+          DATA lt_seen TYPE SORTED TABLE OF string WITH UNIQUE KEY table_line.
+          LOOP AT lt_all INTO DATA(ls_msg).
+            DATA(lv_account) = COND string( WHEN ls_msg-partner IS NOT INITIAL THEN |P{ ls_msg-partner }|
+                                            ELSE |N{ to_upper( ls_msg-vorname ) }/{ to_upper( ls_msg-nachname ) }/{ ls_msg-geburtsdatum }| ).
+            INSERT lv_account INTO TABLE lt_seen.
+            IF sy-subrc NE 0.
+              CONTINUE. " an older message of an account already decided
+            ENDIF.
+            IF ls_msg-meldeart = 'Neumeldung'.
+              APPEND ls_msg TO lt_out.
+            ENDIF.
           ENDLOOP.
         ENDIF.
         IF lt_out IS NOT INITIAL.
