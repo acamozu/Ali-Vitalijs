@@ -56,6 +56,13 @@ export default function ResultView({ result, error, busy, onRetry, onRestart, on
   const outcome = outcomeFor(result.status);
   return (
     <section className={`card result result--${outcome} view-in`}>
+      {outcome === 'review' && (
+        <div className="hourglass" aria-hidden="true">
+          <div className="hourglass-stand" />
+          <div className="hourglass-sand" />
+          <div className="hourglass-stream" />
+        </div>
+      )}
       <h2>{t.result[outcome]}</h2>
       <p>{t.result[`${outcome}Text`]}</p>
       {outcome === 'review' && (

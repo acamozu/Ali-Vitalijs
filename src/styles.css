@@ -482,6 +482,20 @@ h3 { margin: 0 0 4px; }
 .result--rejected { border-color: var(--bad); }
 .result--rejected h2 { color: var(--bad); }
 .result .actions { justify-content: center; gap: 12px; flex-wrap: wrap; }
+/* CSS hourglass: the sand runs down, the glass turns, and it starts again (8 s loop). --hg = glass and sand colour. */
+.hourglass, .hourglass *, .hourglass::before, .hourglass::after, .hourglass *::before, .hourglass *::after { box-sizing: border-box; }
+.hourglass { --hg: var(--warn); margin: 0 auto 15px; position: relative; width: 32px; height: 60px; animation: hourglass-spin 8s ease-in-out 4s infinite; }
+.hourglass::before, .hourglass::after { position: absolute; content: ''; left: 0; bottom: 0; width: 32px; height: 30px; background: var(--hg); border: solid var(--hg); border-width: 4px 4px 2px; border-top-left-radius: 16px 30px; border-top-right-radius: 16px 30px; }
+.hourglass::before { top: 0; transform: rotate(180deg); }
+.hourglass .hourglass-stand::after, .hourglass .hourglass-stand::before { position: absolute; content: ''; z-index: 3; left: -4px; bottom: 0; width: 40px; height: 5px; background: var(--hg); }
+.hourglass .hourglass-stand::before { top: 0; }
+.hourglass .hourglass-sand::before, .hourglass .hourglass-sand::after { position: absolute; content: ''; z-index: 2; left: 4px; bottom: 2px; width: 24px; height: 24px; background: linear-gradient(var(--hg) 0 50%, #fff 50% 100%); background-size: 24px 48px; border-top-left-radius: 12px 22px; border-top-right-radius: 12px 22px; animation: hourglass-sand 8s ease-in-out 0s infinite; }
+.hourglass .hourglass-sand::before { top: 2px; transform: rotate(180deg); animation-delay: -4s; }
+.hourglass .hourglass-stream { position: absolute; z-index: 2; left: 15px; width: 2px; height: 26px; opacity: 0; background: var(--hg); animation: hourglass-stream 8s linear 0.6s infinite; }
+@keyframes hourglass-spin { 0% { transform: rotate(0deg); } 10% { transform: rotate(180deg); } 50% { transform: rotate(180deg); } 60% { transform: rotate(360deg); } 100% { transform: rotate(360deg); } }
+@keyframes hourglass-sand { 0% { background-position: 0 24px; } 50% { background-position: 0 0; } 100% { background-position: 0 -24px; } }
+@keyframes hourglass-stream { 0% { top: 31px; opacity: 0; } 10% { opacity: 1; } 49.9% { top: 31px; opacity: 1; } 50% { top: 2px; opacity: 0; } 60% { opacity: 1; } 100% { top: 2px; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hourglass, .hourglass-sand::before, .hourglass-sand::after, .hourglass-stream { animation: none; } }
 .result__checking { margin: 4px 0 20px; color: var(--text); }
 .dots i { font-style: normal; animation: dot-pulse 1.2s infinite ease-in-out both; }
 .dots i:nth-child(2) { animation-delay: 0.2s; }
