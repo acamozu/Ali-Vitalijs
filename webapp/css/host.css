@@ -1,0 +1,22 @@
+/* Fiori version only: the app scrolls inside its own container (in the Launchpad the window does not scroll),
+   and the small "saved" note of the plan bar. Everything else is css/style.css, shared with the web version. */
+.cpHost { position: relative; height: 100%; overflow-x: hidden; overflow-y: auto; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; background: hsl(240 4% 98.5%); -webkit-overflow-scrolling: touch; }
+.cpHost::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.cpHost > .cp-root { display: flex; flex-direction: column; min-height: 100%; }
+.cpHost > .cp-root > .cp { flex: 1 0 auto; min-height: 0; }
+
+.save-state { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 4px; font-size: .8rem; font-weight: 600; color: hsl(var(--muted-foreground)); white-space: nowrap; }
+.save-state i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #c9cdd3; }
+.save-state.ok i { background: #4fbf86; }
+.save-state.busy i { background: #e3b13b; }
+.save-state.bad { color: hsl(var(--destructive)); cursor: pointer; }
+.save-state.bad i { background: hsl(var(--destructive)); }
+
+/* Launchpad: the shell bar covers the top of the window, so the side menu and the dialogs start below it
+   (--cp-top = distance of the app from the top of the window, set by app/App.js; 0 when the app runs alone) */
+.cpHost .drawer-backdrop, .cpHost .modal-backdrop { top: var(--cp-top, 0px); }
+.cpHost .modal { max-height: min(720px, calc(100dvh - var(--cp-top, 0px) - 48px)); }
+@media (max-width: 699px) { .cpHost .modal { max-height: calc(100dvh - var(--cp-top, 0px) - 16px); } }
+
+/* layer for the open dropdown list: takes no room in the page (its content is positioned on the window) */
+body > .cp-portal { position: fixed; top: 0; left: 0; width: 0; height: 0 !important; z-index: 400; }

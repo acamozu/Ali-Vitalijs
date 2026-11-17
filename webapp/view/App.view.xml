@@ -1,0 +1,8 @@
+<mvc:View
+	controllerName="com.alseda.carpool.controller.App"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:cp="com.alseda.carpool.control"
+	displayBlock="true"
+	height="100%">
+	<cp:Planner id="planner" />
+</mvc:View>
