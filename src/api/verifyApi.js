@@ -79,13 +79,13 @@ async function sapVerify(partner, accessCode = storedAccessCode()) {
   return { status: data.status, techStatus: data.techStatus, requestId: data.requestId };
 }
 
-// Cockpit button: entries of the OUT table with Merkmalcode EK, else AG. Returns { merkmalcode, rows }.
+// Accounts page: business partners with an active contract (SAP table ZESM_VERTRAG). Returns { produkt, rows }.
 export async function fetchCockpit() {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 400));
     return {
-      merkmalcode: 'AG',
-      rows: [{ vorname: 'Max', nachname: 'Mustermann', geschlecht: 'M', geburtsdatum: '1977-06-07', strasse: 'Hanauer Landstraße 111', plz: '60314', ort: 'Frankfurt am Main', land: 'DE', merkmalcode: 'EK', kontonummer: '1234567', datum: '2025-12-03' }],
+      produkt: 'Energievertrag',
+      rows: [{ partner: '0000000001', produkt: 'Energievertrag', vorname: 'Max', nachname: 'Mustermann', geschlecht: 'M', geburtsdatum: '1977-06-07', strasse: 'Hanauer Landstraße 111', plz: '60314', ort: 'Frankfurt am Main', land: 'DE' }],
     };
   }
   const res = await fetch('/sap/zesm_web_check?cockpit=1', {
@@ -93,10 +93,10 @@ export async function fetchCockpit() {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error ?? `Backend returned ${res.status}`);
-  return { merkmalcode: data.merkmalcode, beschreibung: data.beschreibung ?? '', rows: data.rows ?? [] };
+  return { produkt: data.produkt ?? '', rows: data.rows ?? [] };
 }
 
-// "Vertrag kündigen": EK Erledigungsmeldung for the business partner (SAP: ZCL_S2S_SIM_EK_ABMELDUNG).
+// "Vertrag kündigen": removes the active contract and the SCHUFA monitoring of the partner (SAP: ZCL_ESM_SIM_VERTRAG).
 export async function cancelContract(partner) {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 700));

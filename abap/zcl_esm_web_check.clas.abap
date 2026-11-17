@@ -96,8 +96,9 @@ CLASS zcl_esm_web_check DEFINITION
         iv_text   TYPE string.
 
     "! Check accepted (status 01, 03 or 05, shown as 'Angenommen' in the web app) and the partner is known:
-    "! simulated S2S Auskunft AE and EK Neumeldung for the partner (ZCL_S2S_SIM_EK_ABMELDUNG).
-    "! At most once per check: the S2S entries carry the Teilnehmerreferenz ESM- plus request id.
+    "! simulated S2S Auskunft AE, then the contract comes about = active contract in ZESM_VERTRAG
+    "! (ZCL_ESM_SIM_VERTRAG). At most once per check: the Auskunft carries the Teilnehmerreferenz ESM- plus
+    "! request id.
     METHODS s2s_simulation
       IMPORTING
         iv_request_id TYPE /aesm/dte_request_id.
@@ -122,74 +123,51 @@ METHOD if_http_extension~handle_request.
     DATA lt_return  TYPE STANDARD TABLE OF bapiret2 WITH EMPTY KEY.
 
     IF server->request->get_method( ) = 'GET' AND server->request->get_form_field( 'cockpit' ) = '1'.
-      " Accounts page of the web app: Vertragsmeldungen of /S2SSWS/DB_IN.
-      " EK: open accounts only = Meldeart Neumeldung, minus the persons that already have an
-      " Erledigungsmeldung (contract ended) or Löschungsmeldung (contract deleted): those are signed out.
-      " Nothing for EK -> AG as it is.
+      " Accounts page of the web app: business partners with an active contract (table ZESM_VERTRAG,
+      " set after an accepted check, removed by 'Vertrag kündigen'). Person and standard address come
+      " from the business partner master data. There are no SCHUFA contract messages (EK) any more.
       TYPES: BEGIN OF ty_acc,
-               merkmalcode  TYPE /s2ssws/db_in-merkmalcode,
-               meldeart     TYPE /s2ssws/db_in-meldeart,
-               vorname      TYPE /s2ssws/db_in-vorname,
-               nachname     TYPE /s2ssws/db_in-nachname,
-               geschlecht   TYPE /s2ssws/db_in-geschlecht,
-               geburtsdatum TYPE /s2ssws/db_in-geburtsdatum,
-               geburtsort   TYPE /s2ssws/db_in-geburtsort,
-               strasse      TYPE /s2ssws/db_in-strasse,
-               plz          TYPE /s2ssws/db_in-plz,
-               ort          TYPE /s2ssws/db_in-ort,
-               land         TYPE /s2ssws/db_in-land,
-               partner      TYPE /s2ssws/db_partn-partner,
+               partner      TYPE bu_partner,
+               produkt      TYPE text40,
+               vorname      TYPE but000-name_first,
+               nachname     TYPE but000-name_last,
+               xsexm        TYPE but000-xsexm,
+               xsexf        TYPE but000-xsexf,
+               geschlecht   TYPE char1,
+               geburtsdatum TYPE but000-birthdt,
+               geburtsort   TYPE but000-birthpl,
+               street       TYPE adrc-street,
+               house_num1   TYPE adrc-house_num1,
+               strasse      TYPE string,
+               plz          TYPE adrc-post_code1,
+               ort          TYPE adrc-city1,
+               land         TYPE adrc-country,
+               erdat        TYPE erdat,
+               erzeit       TYPE uzeit,
              END OF ty_acc.
-      DATA lt_all TYPE STANDARD TABLE OF ty_acc WITH EMPTY KEY.
       DATA lt_out TYPE STANDARD TABLE OF ty_acc WITH EMPTY KEY.
-      DATA lv_code TYPE /s2ssws/db_in-merkmalcode VALUE 'EK'.
-      DO 2 TIMES.
-        SELECT i~merkmalcode, i~meldeart, i~vorname, i~nachname, i~geschlecht, i~geburtsdatum, i~geburtsort,
-               i~strasse, i~plz, i~ort, i~land, p~partner
-          FROM /s2ssws/db_in AS i
-          LEFT OUTER JOIN /s2ssws/db_partn AS p ON p~daten_guid = i~daten_guid
-          WHERE i~merkmalcode = @lv_code
-          ORDER BY i~crdat DESCENDING, i~crtim DESCENDING
-          INTO CORRESPONDING FIELDS OF TABLE @lt_all
-          UP TO 5000 ROWS.
-        lt_out = lt_all.
-        IF lv_code = 'EK'.
-          " One account per business partner (without partner: per name + birth date, there is no
-          " account number yet). The newest EK message of the account decides (lt_all is sorted newest
-          " first): Neumeldung = open; Erledigungs- or Löschungsmeldung = signed out. So a cancellation
-          " of one partner does not hide another partner with the same name, and a new Neumeldung after
-          " a cancellation shows the account again.
-          CLEAR lt_out.
-          DATA lt_seen TYPE SORTED TABLE OF string WITH UNIQUE KEY table_line.
-          LOOP AT lt_all INTO DATA(ls_msg).
-            DATA(lv_account) = COND string( WHEN ls_msg-partner IS NOT INITIAL THEN |P{ ls_msg-partner }|
-                                            ELSE |N{ to_upper( ls_msg-vorname ) }/{ to_upper( ls_msg-nachname ) }/{ ls_msg-geburtsdatum }| ).
-            INSERT lv_account INTO TABLE lt_seen.
-            IF sy-subrc NE 0.
-              CONTINUE. " an older message of an account already decided
-            ENDIF.
-            IF ls_msg-meldeart = 'Neumeldung'.
-              APPEND ls_msg TO lt_out.
-            ENDIF.
-          ENDLOOP.
-        ENDIF.
-        IF lt_out IS NOT INITIAL.
-          EXIT.
-        ENDIF.
-        lv_code = 'AG'.
-      ENDDO.
-      IF lines( lt_out ) > 200.
-        DELETE lt_out FROM 201.
-      ENDIF.
-      " text of the code, if the OUT table knows it (EK is not in it: the web app has the text)
-      SELECT SINGLE beschreibung FROM /s2ssws/db_out_d WHERE merkmalcode = @lv_code INTO @DATA(lv_desc).
+      SELECT v~partner, v~produkt, v~erdat, v~erzeit, b~name_first AS vorname, b~name_last AS nachname,
+             b~xsexm, b~xsexf, b~birthdt AS geburtsdatum, b~birthpl AS geburtsort,
+             a~street, a~house_num1, a~post_code1 AS plz, a~city1 AS ort, a~country AS land
+        FROM zesm_vertrag AS v
+        INNER JOIN but000 AS b ON b~partner = v~partner
+        LEFT OUTER JOIN but021_fs AS f ON f~partner = v~partner AND f~adr_kind = 'XXDEFAULT'
+        LEFT OUTER JOIN adrc AS a ON a~addrnumber = f~addrnumber
+        ORDER BY v~erdat DESCENDING, v~erzeit DESCENDING
+        INTO CORRESPONDING FIELDS OF TABLE @lt_out
+        UP TO 200 ROWS.
+      " one line per partner, even if the partner had several standard addresses over time
+      DELETE ADJACENT DUPLICATES FROM lt_out COMPARING partner.
+      LOOP AT lt_out ASSIGNING FIELD-SYMBOL(<ls_acc>).
+        <ls_acc>-geschlecht = COND #( WHEN <ls_acc>-xsexm = abap_true THEN 'M'
+                                      WHEN <ls_acc>-xsexf = abap_true THEN 'W' ).
+        <ls_acc>-strasse = condense( |{ <ls_acc>-street } { <ls_acc>-house_num1 }| ).
+      ENDLOOP.
       DATA: BEGIN OF ls_cockpit,
-              merkmalcode  TYPE string,
-              beschreibung TYPE string,
-              rows         TYPE REF TO data,
+              produkt TYPE string,
+              rows    TYPE REF TO data,
             END OF ls_cockpit.
-      ls_cockpit-merkmalcode = lv_code.
-      ls_cockpit-beschreibung = lv_desc.
+      ls_cockpit-produkt = zcl_esm_sim_vertrag=>gc_produkt.
       ls_cockpit-rows = REF #( lt_out ).
       respond(
         io_server = server
@@ -199,9 +177,9 @@ METHOD if_http_extension~handle_request.
       RETURN.
     ENDIF.
 
-    " POST ?action=abmelden {"partner":"..."} : Vertrag kündigen = EK Erledigungsmeldung for the business
-    " partner (class ZCL_S2S_SIM_EK_ABMELDUNG, test system A2H). Only partners that have an open EK
-    " Neumeldung (= are in the Konten list) can be cancelled.
+    " POST ?action=abmelden {"partner":"..."} : Vertrag kündigen = remove the active contract of the business
+    " partner (ZESM_VERTRAG) and take it out of the SCHUFA monitoring (class ZCL_ESM_SIM_VERTRAG). Only
+    " partners with an active contract (= in the Konten list) can be cancelled.
     IF server->request->get_method( ) = 'POST' AND server->request->get_form_field( 'action' ) = 'abmelden'.
       TYPES: BEGIN OF ty_cancel,
                partner TYPE string,
@@ -220,18 +198,11 @@ METHOD if_http_extension~handle_request.
         RETURN.
       ENDIF.
       DATA(lv_cancel_partner) = CONV bu_partner( |{ ls_cancel-partner ALPHA = IN }| ).
-      SELECT SINGLE i~daten_guid
-        FROM /s2ssws/db_in AS i
-        INNER JOIN /s2ssws/db_partn AS p ON p~daten_guid = i~daten_guid
-        WHERE p~partner = @lv_cancel_partner
-          AND i~merkmalcode = 'EK'
-          AND i~meldeart = 'Neumeldung'
-        INTO @DATA(lv_open_guid).
-      IF sy-subrc <> 0.
-        respond_error( io_server = server iv_code = 404 iv_reason = `Not Found` iv_text = `No open EK contract for this partner.` ).
+      IF zcl_esm_sim_vertrag=>ist_aktiv( lv_cancel_partner ) EQ abap_false.
+        respond_error( io_server = server iv_code = 404 iv_reason = `Not Found` iv_text = `No active contract for this partner.` ).
         RETURN.
       ENDIF.
-      DATA(ls_cancelled) = zcl_s2s_sim_ek_abmeldung=>abmelden( iv_partner = lv_cancel_partner ).
+      DATA(ls_cancelled) = zcl_esm_sim_vertrag=>kuendigen( iv_partner = lv_cancel_partner ).
       IF ls_cancelled-success = abap_false.
         respond_error(
           io_server = server iv_code = 409 iv_reason = `Conflict`
@@ -270,7 +241,7 @@ METHOD if_http_extension~handle_request.
       IF is_case_open( ls_current-process_status ) EQ abap_true.
         ls_current-status = ls_current-tech_status.
       ENDIF.
-      " The officer accepted the case in the cockpit (03/05): S2S Auskunft and Meldung now
+      " The officer accepted the case in the cockpit (03/05): S2S Auskunft and contract now
       s2s_simulation( lv_request_id ).
       respond(
         io_server = server
@@ -402,7 +373,7 @@ METHOD if_http_extension~handle_request.
       ENDIF.
     ENDIF.
 
-    " Accepted right away (01): S2S Auskunft and Meldung for the partner
+    " Accepted right away (01): S2S Auskunft and contract for the partner
     s2s_simulation( lv_new_id ).
 
     respond(
@@ -781,10 +752,10 @@ METHOD if_http_extension~handle_request.
       DATA(lv_partner) = CONV bu_partner( condense( ls_check-external_reference ) ).
       lv_partner = |{ lv_partner ALPHA = IN }|.
       TRY.
-          zcl_s2s_sim_ek_abmeldung=>auskunft( iv_partner            = lv_partner
-                                              iv_teilnehmerreferenz = lv_reference ).
-          zcl_s2s_sim_ek_abmeldung=>meldung( iv_partner            = lv_partner
-                                             iv_teilnehmerreferenz = lv_reference ).
+          zcl_esm_sim_vertrag=>auskunft( iv_partner            = lv_partner
+                                         iv_teilnehmerreferenz = lv_reference ).
+          zcl_esm_sim_vertrag=>abschliessen( iv_partner    = lv_partner
+                                             iv_request_id = iv_request_id ).
         CATCH cx_root ##CATCH_ALL ##NO_HANDLER.
           " simulation only: the answer to the web app must not fail because of it
       ENDTRY.

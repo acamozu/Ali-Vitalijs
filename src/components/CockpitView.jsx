@@ -14,12 +14,6 @@ const formatDate = (d) => {
 
 const address = (r) => [r.strasse, [r.plz, r.ort].filter(Boolean).join(' '), r.land].filter(Boolean).join(', ');
 
-// description of the feature codes in both languages (the OUT table has no text for EK and only a German one)
-const codeNames = {
-  EK: { de: 'Energieversorgungskonto', en: 'Energy supply account' },
-  AG: { de: 'Anfrage zum Girokonto', en: 'Current account enquiry' },
-};
-
 const SearchIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
     <circle cx="11" cy="11" r="6.5" />
@@ -29,7 +23,7 @@ const SearchIcon = () => (
 
 // state = { loading, error, data } of the account list; the app loads it (the tab shows its count)
 export default function CockpitView({ state, onCancelled }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [confirm, setConfirm] = useState(null); // id of the account whose contract is to be cancelled
@@ -39,7 +33,8 @@ export default function CockpitView({ state, onCancelled }) {
   const scrollRef = useRef(null);
 
   const { loading, error, data } = state;
-  const description = data ? codeNames[data.merkmalcode]?.[lang] || data.beschreibung || '' : '';
+  // product of the contract in the current language (SAP sends the German name, e.g. "Energievertrag")
+  const product = (r) => t.cockpit.products[r.produkt] || r.produkt || '';
 
   // the count in the title is the filtered one
   const rows = useMemo(() => {
@@ -48,9 +43,10 @@ export default function CockpitView({ state, onCancelled }) {
     const q = query.trim().toLowerCase();
     if (!q) return all;
     return all.filter((r) =>
-      [person(r), address(r), r.merkmalcode, description].some((v) => (v ?? '').toLowerCase().includes(q)),
+      [person(r), address(r), product(r)].some((v) => (v ?? '').toLowerCase().includes(q)),
     );
-  }, [data, query, description]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, query, t]);
 
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const current = Math.min(page, pages);
@@ -134,7 +130,7 @@ export default function CockpitView({ state, onCancelled }) {
                   <tr>
                     <th>{t.cockpit.columns.person}</th>
                     <th>{t.cockpit.columns.geburtsdatum}</th>
-                    <th>{t.cockpit.columns.merkmalcode}</th>
+                    <th>{t.cockpit.columns.produkt}</th>
                     <th>{t.cockpit.columns.adresse}</th>
                     <th className="cockpit__end"><span className="sr-only">{t.cockpit.deregister}</span></th>
                   </tr>
@@ -153,10 +149,7 @@ export default function CockpitView({ state, onCancelled }) {
                         </span>
                       </td>
                       <td data-label={t.cockpit.columns.geburtsdatum}>{formatDate(r.geburtsdatum) || '–'}</td>
-                      <td data-label={t.cockpit.columns.merkmalcode}>
-                        <strong>{r.merkmalcode}</strong>
-                        {description && <small className="cockpit__sub">{description}</small>}
-                      </td>
+                      <td data-label={t.cockpit.columns.produkt}>{product(r) || '–'}</td>
                       <td data-label={t.cockpit.columns.adresse}>{address(r) || '–'}</td>
                       <td className="cockpit__end">
                         <button type="button" className="cockpit__action" onClick={() => setConfirm(r.id)}>
