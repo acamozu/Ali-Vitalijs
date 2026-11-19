@@ -1,0 +1,20 @@
+{
+	"name": "agendafiori",
+	"version": "0.1.0",
+	"description": "alseda Year-End Conference 2026 - live agenda as a UI5 / Fiori app",
+	"scripts": {
+		"start": "npx --yes http-server webapp -p 8087 -c-1",
+		"build": "ui5 build --clean-dest --include-task=generateManifestBundle generateCachebusterInfo",
+		"gen": "node tools/gen-assets.mjs"
+	},
+	"devDependencies": {
+		"@ui5/cli": "1.13.0",
+		"@sap/ui5-builder-webide-extension": "1.0.x"
+	},
+	"ui5": {
+		"dependencies": [
+			"@sap/ui5-builder-webide-extension"
+		]
+	},
+	"private": "true"
+}

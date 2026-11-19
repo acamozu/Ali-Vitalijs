@@ -1,0 +1,8 @@
+<mvc:View
+	controllerName="com.alseda.agenda.controller.App"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:ag="com.alseda.agenda.control"
+	displayBlock="true"
+	height="100%">
+	<ag:Agenda id="agenda" />
+</mvc:View>

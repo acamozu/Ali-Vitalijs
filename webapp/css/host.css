@@ -1,0 +1,20 @@
+/* Fiori version only. Everything else is css/style.css, generated from the stylesheet of the web version.
+
+   The app scrolls inside its own container (inside the Launchpad the window does not scroll):
+     .agHost            the element UI5 renders: fills the app area, clips
+       .ag-scroll       the scrolling area (the "window" of the web version)
+         .ag-page       the page: <main class="landing"> or <main class="ag">
+       .splash          loading screen, covers the app area only (not the Launchpad shell bar) */
+.agHost { position: relative; height: 100%; overflow: hidden; }
+.agHost .ag-scroll { height: 100%; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* On the plain page the values below came from the browser defaults of <body>. In UI5 the app sits inside
+   .sapUiBody and sap.m / Launchpad containers, which set font size, weight, line height, alignment and
+   white-space - and all of these inherit. They are pinned on the app root, so everything inside inherits the
+   same values as on the plain page. */
+.agHost { font-size: 1rem; font-weight: 400; font-style: normal; line-height: normal; letter-spacing: normal; word-spacing: normal; text-align: left; text-indent: 0; text-transform: none; text-shadow: none; white-space: normal; }
+
+/* QR page: as high as the app area (--ag-vh is set by app/App.js; 100vh would include the Launchpad shell bar) */
+.agHost .landing { min-height: var(--ag-vh, 100dvh); }
+/* loading screen: inside the app area */
+.agHost .splash { position: absolute; }

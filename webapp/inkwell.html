@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de" style="height: 100%">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>alseda Year-End Conference – Agenda</title>
+	<link rel="icon" type="image/png" href="img/favicon.png">
+
+	<!-- The live agenda in the carpool look ("Inkwell"), as inkwell.html of the web version: the same app, only the
+	     skin differs (css/skin.css). Same as index.html?skin=inkwell. Standalone start only, see index.html. -->
+	<script
+		id="sap-ui-bootstrap"
+		src="https://ui5.sap.com/1.71.80/resources/sap-ui-core.js"
+		data-sap-ui-theme="sap_fiori_3"
+		data-sap-ui-resourceroots='{
+			"com.alseda.agenda": "./"
+		}'
+		data-sap-ui-oninit="module:sap/ui/core/ComponentSupport"
+		data-sap-ui-compatVersion="edge"
+		data-sap-ui-async="true"
+		data-sap-ui-frameOptions="trusted">
+	</script>
+	<style>
+		/* standalone only: the container fills the window (inside the Launchpad the shell does this) */
+		.sapUiBody > div, .sapUiComponentContainer { height: 100%; }
+	</style>
+</head>
+
+<body class="sapUiBody" style="height: 100%; margin: 0">
+	<div data-sap-ui-component
+		data-name="com.alseda.agenda"
+		data-id="agendaContainer"
+		data-settings='{"componentData": {"skin": "inkwell"}}'
+		data-height="100%"></div>
+</body>
+
+</html>
