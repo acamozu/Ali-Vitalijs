@@ -17,8 +17,8 @@ const layout = ["classic", "cards", "rings"].includes(params.get("layout")) ? pa
 // Public address of the deployed site (encoded in the QR code)
 const PUBLIC_URL = "https://alseda-year-end-conference-agenda.netlify.app/";
 
-// ?today -> demo: treat today's date (Germany) as the event day, so the live state can be tried any time
-const demoToday = params.has("today");
+// The live state (what is on now, the bar, the dot) always runs on today's date in Germany, whatever day it is:
+// the page still says 27 November, but nothing depends on that day.
 
 // Agenda clock: German time from the internet (see clock.js), re-synced every 5 minutes; device clock only as last resort.
 // ?now=10:40 simulates a time of day (rehearsal / testing).
@@ -46,8 +46,8 @@ function useAgendaClock() {
   }, [sim]);
 
   const nowMs = Date.now() + sync.offset;
-  const eventDate = demoToday ? berlinDate(nowMs) : EVENT.date;
-  const tz = demoToday ? berlinOffset(nowMs) : EVENT.tz;
+  const eventDate = berlinDate(nowMs);
+  const tz = berlinOffset(nowMs);
   const slots = useMemo(() => buildSlots(eventDate, tz), [eventDate, tz]);
   const now = sim ? new Date(`${eventDate}T${sim}:00${tz}`) : new Date(nowMs);
   return { now, slots, source: sync.source };
@@ -169,10 +169,10 @@ function Landing({ lang, setLang, t }) {
           </p>
         </div>
         <div className="landing-qr">
-          {/* not a link: the agenda is opened by scanning the code with a phone, not by clicking it */}
-          <div className="qr" role="img" aria-label={t.scan}>
+          {/* scan it with a phone or click it: both open the same address, the one the code contains */}
+          <a className="qr" href={target} aria-label={t.openAgenda}>
             <QRCodeSVG value={target} size={512} level="M" marginSize={0} />
-          </div>
+          </a>
           <p className="hint">{t.scan}</p>
         </div>
       </div>
@@ -386,9 +386,7 @@ function Agenda({ lang, setLang, t, ready }) {
               <span className="ag-live-left">{t.left(Math.max(1, Math.ceil((current.end - now) / 60000)))}</span>
             </button>
           )}
-          {demoToday && (
-            <p className="ag-demo">{fmt(now)}</p>
-          )}
+          <p className="ag-demo">{fmt(now)}</p>
           </div>
         </div>
       </header>
