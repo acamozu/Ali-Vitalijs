@@ -21,7 +21,7 @@ const PUBLIC_URL = "https://alseda-year-end-conference-agenda.netlify.app/";
 // the page still says 27 November, but nothing depends on that day.
 
 // Agenda clock: German time from the internet (see clock.js), re-synced every 5 minutes; device clock only as last resort.
-// ?now=10:40 simulates a time of day (rehearsal / testing).
+// ?now=10:40 simulates a time of day (rehearsal / testing): the clock starts there and keeps running.
 function useAgendaClock() {
   const sim = params.get("now");
   const [sync, setSync] = useState({ offset: 0, source: "device" });
@@ -39,22 +39,26 @@ function useAgendaClock() {
       clearInterval(id);
     };
   }, []);
+  // look 4x a second, render once a second (the countdown shows seconds): setting the same value renders nothing
   useEffect(() => {
-    if (sim) return;
-    const id = setInterval(() => setTick((n) => n + 1), 5000);
+    const id = setInterval(() => setTick(Math.floor(Date.now() / 1000)), 250);
     return () => clearInterval(id);
-  }, [sim]);
+  }, []);
+  const [openedAt] = useState(() => Date.now());
 
   const nowMs = Date.now() + sync.offset;
   const eventDate = berlinDate(nowMs);
   const tz = berlinOffset(nowMs);
   const slots = useMemo(() => buildSlots(eventDate, tz), [eventDate, tz]);
-  const now = sim ? new Date(`${eventDate}T${sim}:00${tz}`) : new Date(nowMs);
+  const now = sim ? new Date(new Date(`${eventDate}T${sim}:00${tz}`).getTime() + (Date.now() - openedAt)) : new Date(nowMs);
   return { now, slots, source: sync.source };
 }
 
 const fmt = (d) =>
   d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
+
+// 4500 -> "01:15:00"
+const hms = (secs) => [secs / 3600, (secs / 60) % 60, secs % 60].map((n) => String(Math.floor(n)).padStart(2, "0")).join(":");
 
 // time ring: past = full, upcoming = empty, current = share of the event that has passed
 const RING_R = 44;
@@ -342,9 +346,10 @@ function Agenda({ lang, setLang, t, ready }) {
   }, [phase]);
 
   const ended = now >= slots[slots.length - 1].end; // the whole programme is over
-  let status = "";
-  if (now < slots[0].start) status = t.before(fmt(slots[0].start));
-  else if (now >= slots[slots.length - 1].end) status = t.after;
+  const status = ended ? t.after : "";
+  // until the first talk begins, a box on the cover counts down to it
+  const confStart = slots.find((s) => s.type === "session").start;
+  const secsToStart = now < confStart ? Math.ceil((confStart - now) / 1000) : 0;
 
   return (
     <main className="ag">
@@ -371,7 +376,13 @@ function Agenda({ lang, setLang, t, ready }) {
           </p>
           <LangSwitch lang={lang} setLang={setLang} />
           {status && <p className="ag-status">{status}</p>}
-          {current && (
+          {secsToStart > 0 && (
+            <div className="ag-countdown">
+              <span>{t.startsIn}</span>
+              <b role="timer">{hms(secsToStart)}</b>
+            </div>
+          )}
+          {current && !secsToStart && (
             <button
               type="button"
               className="ag-live"
