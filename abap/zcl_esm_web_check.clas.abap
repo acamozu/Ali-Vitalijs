@@ -305,6 +305,11 @@ METHOD if_http_extension~handle_request.
       RETURN.
     ENDIF.
 
+    " OekoFest asks Schufa without PEP: for search and monitoring of this request
+    " /AESM/CLB_VERIFY_EXTERNAL takes the lists from SCHUFA_CPL_SVC/LISTS_WEBAPP (memory ends with the request)
+    DATA(lv_channel) = CONV /aesm/clb_verify_external=>ty_channel( 'WEBAPP' ).
+    EXPORT channel = lv_channel TO MEMORY ID /aesm/clb_verify_external=>co_memory_channel.
+
     TRY.
         CALL FUNCTION '/AESM/FM_CHECK_BP'
           EXPORTING
