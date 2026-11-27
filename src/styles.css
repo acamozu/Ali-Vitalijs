@@ -537,3 +537,21 @@ a.qr:focus-visible { outline: 3px solid var(--year); outline-offset: 4px; }
 .ag-countdown span { font-size: .78rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; opacity: .9; }
 .ag-countdown b { font-size: 2.4rem; font-weight: 700; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
 @media (min-width: 600px) { .ag-countdown { width: min(92vw, 440px); } }
+/* the countdown box breathes: only its colour brightens and settles again, the size stays */
+.ag-countdown { animation: cd-breathe 4s ease-in-out infinite; }
+@keyframes cd-breathe {
+  0%, 100% { background-color: #ffffff1f; border-color: #ffffff59; }
+  50% { background-color: #ffffff3d; border-color: #ffffff8c; }
+}
+@media (prefers-reduced-motion: reduce) { .ag-countdown { animation: none; } }
+
+/* centre bar without the small triangles pointing at the rows */
+.bd-row .bd-axis::after { display: none; }
+
+/* large screens only: the dot on the bar is a bit bigger (phone and tablet keep their size) */
+@media (min-width: 900px) {
+  .bd { --dot-w: 10px; }
+  .bd-now, .bd-dot { width: calc(var(--dot-w) * 1.75); height: calc(var(--dot-w) * 1.75); margin: calc(var(--dot-w) * -0.875) 0 0 calc(var(--dot-w) * -0.875); border-width: calc(var(--dot-w) * 0.35); }
+  .bd-now::after, .bd-dot::after { inset: calc(var(--dot-w) * -0.35); }
+  .bd:not(.intro) .bd-row.last-ended .bd-now { top: calc(100% - var(--dot-w) * 0.875); }
+}

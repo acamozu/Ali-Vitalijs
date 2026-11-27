@@ -279,7 +279,9 @@ function Agenda({ lang, setLang, t, ready }) {
     });
     if (statusOf(sl[sl.length - 1], nw) === "past") {
       // programme over: the dot rests fully inside the bottom end of the bar (not half cut off)
-      const barW = parseFloat(getComputedStyle(ol).getPropertyValue("--bar-w")) || 8;
+      // on large screens the dot has its own, bigger size (--dot-w); elsewhere it follows the bar width
+      const cs = getComputedStyle(ol);
+      const barW = parseFloat(cs.getPropertyValue("--dot-w")) || parseFloat(cs.getPropertyValue("--bar-w")) || 8;
       targetY -= barW * 0.875;
     }
     if (targetY <= 0) {
