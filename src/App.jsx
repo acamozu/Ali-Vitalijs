@@ -39,7 +39,7 @@ function useAgendaClock() {
       clearInterval(id);
     };
   }, []);
-  // look 4x a second, render once a second (the countdown shows seconds): setting the same value renders nothing
+  // look 4x a second, render once a second: setting the same value renders nothing
   useEffect(() => {
     const id = setInterval(() => setTick(Math.floor(Date.now() / 1000)), 250);
     return () => clearInterval(id);
@@ -57,8 +57,11 @@ function useAgendaClock() {
 const fmt = (d) =>
   d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
 
-// 4500 -> "01:15:00"
-const hms = (secs) => [secs / 3600, (secs / 60) % 60, secs % 60].map((n) => String(Math.floor(n)).padStart(2, "0")).join(":");
+// 4500 -> "01:15"; a started minute counts, so it never shows 00:00 before the start
+const hm = (secs) => {
+  const mins = Math.ceil(secs / 60);
+  return [mins / 60, mins % 60].map((n) => String(Math.floor(n)).padStart(2, "0")).join(":");
+};
 
 // time ring: past = full, upcoming = empty, current = share of the event that has passed
 const RING_R = 44;
@@ -379,7 +382,7 @@ function Agenda({ lang, setLang, t, ready }) {
           {secsToStart > 0 && (
             <div className="ag-countdown">
               <span>{t.startsIn}</span>
-              <b role="timer">{hms(secsToStart)}</b>
+              <b role="timer">{hm(secsToStart)}</b>
             </div>
           )}
           {current && !secsToStart && (
